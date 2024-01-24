@@ -83,7 +83,7 @@ vcpkg install openssl-windows --triplet x64-windows
 
 
 
-## **Variant 2** (local on the project, with the [binary bundle x86](https://portal.ism.ase.ro/mod/folder/view.php?id=450))
+## **Variant 2** (local on the project, with the [binary bundle x86](https://portal.ism.ase.ro/mod/folder/view.php?id=450) / [instant download](https://portal.ism.ase.ro/pluginfile.php/1309/mod_folder/content/0/openssl111l-build.zip?forcedownload=1))
 
 **ATTENTION: BEING THE BUNDLE ON 32 BIT, YOU HAVE TO USE THE X86 COMPILER NOT THE X64 ONE !!**
 
