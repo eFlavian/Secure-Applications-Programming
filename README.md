@@ -67,7 +67,7 @@ keytool -importcert -file certificate.cer -keystore keystore.jks -alias "ismaser
 
 ## OpenSSL installation
 
-### **Variant 1** (whole system, but latest version)
+## **Variant 1** (whole system, but latest version)
 ```
 git clone https://github.com/Microsoft/vcpkg
 cd vcpkg
@@ -81,13 +81,17 @@ vcpkg install openssl-windows --triplet x64-windows
 **Note: Restart Visual Studio for changes to take effect.**
 
 
-### **Variant 2** (local on the project, with the [binary bundle x86](https://portal.ism.ase.ro/mod/folder/view.php?id=450))
 
-**ATTENTION: BEING THE BUNDLE ON 32 BIT, YOU HAVE TO USE THE X86 COMPILER NOT THE X64 ONE**
+## **Variant 2** (local on the project, with the [binary bundle x86](https://portal.ism.ase.ro/mod/folder/view.php?id=450))
+
+**ATTENTION: BEING THE BUNDLE ON 32 BIT, YOU HAVE TO USE THE X86 COMPILER NOT THE X64 ONE !!**
 
 ![Alt text](image-2.png)
 ![Alt text](image-3.png)
 ![Alt text](image-4.png)
 ![Alt text](image-5.png)
 
-**Note: Restart Visual Studio for changes to take effect.**
+```diff
+! Note: Success.
+```
+
