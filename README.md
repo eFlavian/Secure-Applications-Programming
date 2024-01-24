@@ -93,4 +93,26 @@ vcpkg install openssl-windows --triplet x64-windows
 ![Alt text](image-5.png)
 
 
+## CBC Figure
+![Alt text](image-6.png)
+
+## Digital Signature
+![Alt text](image-7.png)
+
+# **Workflow:**
+
+1. **Sender (creates a message digest for the plain text)**:
+> The sender uses a hash function to create a fixed-size message digest (hash value) from the original plain text.
+2. **Message digest is encrypted with the private key of the sender**:
+> The sender then encrypts the message digest with their private key. This process is known as creating a digital signature.
+3.**Destination (recipient) receives plain text + the digital signature:**
+> The recipient receives both the original plain text and the digital signature.
+4. **Decrypts with the public key of the sender:**
+> The recipient decrypts the received digital signature using the public key of the sender. This step ensures that only the sender, who possesses the corresponding private key, could have created this specific digital signature.
+5. **Verifies the message digest:**
+> After decrypting the digital signature, the recipient obtains the original message digest.
+6 **Compares with the locally generated message digest:**
+> The recipient independently generates a new message digest from the received plain text using the same hash function that the sender used.
+> The recipient compares the decrypted message digest with the locally generated message digest. If they match, it verifies the integrity of the message and the authenticity of the sender.
+
 **Note: Success.**
