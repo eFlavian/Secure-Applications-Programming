@@ -107,7 +107,7 @@ vcpkg install openssl-windows --triplet x64-windows
 2. **Message digest is encrypted with the private key of the sender**:
 > The sender then encrypts the message digest with their private key. This process is known as creating a digital signature.
 
-3.**Destination (recipient) receives plain text + the digital signature:**
+3. **Destination (recipient) receives plain text + the digital signature:**
 > The recipient receives both the original plain text and the digital signature.
 
 4. **Decrypts with the public key of the sender:**
