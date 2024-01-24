@@ -61,6 +61,7 @@ keytool -importcert -file certificate.cer -keystore keystore.jks -alias "ismaser
 
 **Note:**
 > keytool.exe -genkey -keyalg RSA -alias ismkey1 -keypass passism1 -storepass passks -keystore ismkeystore.ks -dname "cn=ISM, ou=ISM, o=IT&C Security Master, c=RO"
+
 > Can be seen 2 levels of protection: -keypass: parola la cheia privata, -storepass: parola la store-ul care contine mai multe chestii. Ca o baza de date.
 
 
@@ -91,7 +92,5 @@ vcpkg install openssl-windows --triplet x64-windows
 ![Alt text](image-4.png)
 ![Alt text](image-5.png)
 
-```diff
-! Note: Success.
-```
 
+**Note: Success.**
