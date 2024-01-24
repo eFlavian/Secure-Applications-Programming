@@ -99,7 +99,7 @@ vcpkg install openssl-windows --triplet x64-windows
 ## Digital Signature
 ![Alt text](image-7.png)
 
-# **Workflow:**
+### **Workflow:**
 
 1. **Sender (creates a message digest for the plain text)**:
 > The sender uses a hash function to create a fixed-size message digest (hash value) from the original plain text.
