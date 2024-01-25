@@ -1,10 +1,643 @@
 
 # JAVA
 
+## Day 1 - LFSR:
+
+**LFSR Class**
+```
+package ro.ase.ism.sap.day1;
+
+//implement a LFSR based on the x^31 + x^7 + x^5 + x^3 + x^2 + x + 1
+public class LFSR {
+	byte[] register = new byte[4];
+	
+	public void init(byte[] seed) {
+		if(seed.length != 4) {
+			throw new UnsupportedOperationException("Seed size is wrong");
+		}
+		else {
+			for(int i = 0; i < 4; i++) {
+				this.register[i] = seed[i];
+			}
+		}
+	}
+	
+	//index from 0 to 31
+	private byte getBitAtIndex(int index) {
+		if(index < 0 || index  > 31) {
+			throw new UnsupportedOperationException("Wrong index");
+		}
+		
+		int byteIndex = 3 - (index / 8);
+		int bitIndex = index % 8;
+		
+		byte bitMask = (byte) (1 << bitIndex);
+		
+		return (byte) ((this.register[byteIndex] & bitMask) >> bitIndex);
+	}
+	
+	//input is 0 or 1
+	//index is 0 -> 3
+	private byte shiftWithInsertRegisterByte(byte input, int index) {
+		byte registerByte = this.register[index];
+		
+		byte outBit = (byte) (registerByte & 1);
+		registerByte = (byte) ((registerByte & 0xFF) >> 1);
+		registerByte = (byte) (registerByte | (input << 7));
+		
+		this.register[index] = registerByte;
+		
+		return outBit;
+	}
+	
+	private byte doStep() {
+		byte xorResult = (byte) (getBitAtIndex(31) ^ getBitAtIndex(7) ^ 
+				getBitAtIndex(5) ^ getBitAtIndex(3) ^ 
+				getBitAtIndex(2) ^ getBitAtIndex(1) ^
+				getBitAtIndex(0));
+		
+		byte tempBit = shiftWithInsertRegisterByte(xorResult, 0);
+		tempBit = shiftWithInsertRegisterByte(tempBit, 1);
+		tempBit = shiftWithInsertRegisterByte(tempBit, 2);
+		byte resultBit = shiftWithInsertRegisterByte(tempBit, 3);
+		
+		return resultBit;
+	}
+	
+	public byte getRandomByte() {
+		byte result = 0;
+		for(int i = 0; i < 8; i++) {
+			result = (byte) (result << 1);
+			byte randomBit = this.doStep();	//1 or 0
+			result = (byte) (result | randomBit);
+		}
+		return result;
+	}
+}
+```
+
+
+### MAIN: DAY 1 LFSR
+```
+package ro.ase.ism.sap.day1;
+
+public class Test {
+
+	public static void main(String[] args) {
+		
+		byte value = 0b0001_0111;
+		
+		System.out.println("The value is "  + value);
+		
+		//shift to left
+		value = (byte) (value << 2);
+		System.out.println("The value is "  + value);
+		
+		value = (byte) (value << 1);
+		System.out.println("The value is "  + value);
+		
+		//value is now 1011_1000
+		
+		//we get 10000000_00000000_..._00111000
+		int intValue = (int) value;
+		
+		//unsigned shift to right
+		//temporary we get an int with  00000000_00000000_..._10111000
+		value = (byte) ((value & 0xFF) >> 1);
+		System.out.println("The value is "  + value);
+		
+		System.out.println("Demo");
+		for(int i = 0; i < 36; i++) {
+			System.out.println("The value is "  + (value >> i));	
+		}
+		
+		//how to check and get bit values
+		byte keyByte = (byte) 0b1010_0010;
+		
+		//check if the 4th bit from left to right is 1
+		byte _4thBitMask = 0b0001_0000; //1 << 4;
+		
+		if((keyByte & _4thBitMask) == 0) {
+			System.out.println("The 4th bit is zero");
+		} else {
+			System.out.println("The 4th bit is one");
+		}
+		
+		byte _4thBitValue = (byte) (keyByte & _4thBitMask);
+		
+		
+		//implement a LFSR based on the x^32 + x^7 + x^5 + x^3 + x^2 + x + 1
+		LFSR lfsr = new LFSR();
+		byte[] seed = {10,20,30,40};
+		lfsr.init(seed);
+		
+		for(int i = 0 ; i < 10; i++) {
+			byte randomByte = lfsr.getRandomByte();
+			System.out.println("random byte is " + randomByte);
+		}
+		
+	}
+
+}
+
+```
+
+
+## Day 1 - STRING AND VALUES:
+
+### MAIN: DAY 1 STRING AND VALUES
+```
+package ro.ase.ism.sap.day1;
+
+import java.util.Base64;
+
+public class Test {
+	
+	public static String getHexString(byte[] value) {
+		StringBuilder result = new StringBuilder();
+		result.append("0x");
+		for(byte b : value) {
+			result.append(String.format("%02X", b));
+		}
+		return result.toString();
+	}
+
+	public static void main(String[] args) {
+
+		String filename = "Message.txt";
+		String anotherFile = "Message.txt";
+		
+		//wrong way
+		if(filename == anotherFile) {
+			System.out.println("They are equal");
+		} else {
+			System.out.println("They are different");
+		}
+		
+		
+		anotherFile = new String("Message.txt");
+		if(filename == anotherFile) {
+			System.out.println("They are equal");
+		} else {
+			System.out.println("They are different");
+		}
+		
+		//correct way with equals
+		anotherFile = new String("Message.txt");
+		if(filename.equals(anotherFile)) {
+			System.out.println("They are equal");
+		} else {
+			System.out.println("They are different");
+		}
+		
+		filename = "Message.enc";
+		System.out.println("Filename  = " + filename);
+		System.out.println("Other Filename  = " + anotherFile);
+		
+		int value1 = 23;
+		Integer iObject1 = 23; //managed by a Constant Pool of numbers up to 127
+		Integer iObject2 = 23;
+		
+		if(iObject1 == iObject2) {
+			System.out.println("The numbers are equal");
+		} else {
+			System.out.println("The numbers are different");
+		}
+		
+		iObject1 = 230;
+		iObject2 = 230;
+		
+		if(iObject1.equals(iObject2)) {
+			System.out.println("The numbers are equal");
+		} else {
+			System.out.println("The numbers are different");
+		}
+		
+		//converting strings to byte arrays and reverse
+		String password = "12345678";
+		char c = 'a';		//2 bytes
+		byte b = 1;			//1 byte value
+		
+		byte[] passwordAsByteArray = password.getBytes();
+		System.out.println("Password size is " + passwordAsByteArray.length);
+		
+		
+		//only if we know for sure that the values was obtained from a String
+		String oldPassword = new String(passwordAsByteArray);
+		System.out.println("The password is " + oldPassword);
+		
+		//printing byte arrays with different encodings
+		//hex
+		byte[] randomKey = {10,0,1,23,100,120,0,2};
+		
+		//let's break the value converting it to string
+		//don't convert it to string
+		password = new String(randomKey);
+		
+		System.out.println("The pass is " + password);
+		byte[] initialKey = password.getBytes();
+		for(byte bvalue : initialKey) {
+			System.out.println("The byte is " + bvalue);
+		}
+		
+		byte[] newRandomKey = {10,0,2,23,100,120,0,2};
+		String newRandomPassword = new String(newRandomKey);
+		
+		System.out.println("The new pass is " + newRandomPassword);
+		
+		if(newRandomPassword.equals(password)) {
+			System.out.println("They are equal");
+		}
+		else {
+			System.out.println("They are different");
+		}
+		
+		//hexadecimal representation
+		System.out.println(String.format("Hex value of 30 is 0x%02x", 30));
+		
+		System.out.println("Hex value of binary key is " + 
+				getHexString(newRandomKey));
+		
+		//base64 
+		String base64Password = Base64.getEncoder().encodeToString(newRandomKey);
+		System.out.println("The binary pass as base64 is " + base64Password);
+		
+		byte[] oldPasswordValue = Base64.getDecoder().decode(base64Password);
+		
+		System.out.println("Hex value of binary key is " + 
+				getHexString(oldPasswordValue));
+		
+		//define numbers and bytes
+		byte byteValue = 23;
+		byteValue = 0b00010111;	//still 23
+		byteValue = 0b0001_0111;//still 23
+		byteValue = 0x17; //still 23
+		byteValue = 1 << 4 | 1 << 2 | 1 << 1 | 1; //still 23
+		
+		System.out.println("Value is " + byteValue);
+		
+		//shifting values
+		byteValue = (byte) (byteValue << 2);
+		System.out.println("Value is " + byteValue);
+		
+		byteValue = (byte) (byteValue << 1);
+		System.out.println("Value is " + byteValue); //sign bit is 1
+		
+		/*
+		 * byteValue = (byte) (byteValue >> 1); System.out.println("Value is " +
+		 * byteValue);
+		 */
+		
+		int intValue = (int)byteValue;
+		System.out.println("Int Value is " + intValue); 
+		
+		byteValue = (byte) (byteValue >>> 1);  //does not work on byte
+		System.out.println("Value is * " + byteValue);
+		
+		//check the first/sign bit
+		boolean isNegative = ((byteValue & (1 << 7)) == 0 ? false : true);
+		
+		if(isNegative)
+			byteValue -= 0b1000_0000;
+		
+		System.out.println("Value is " + byteValue);
+		
+		intValue = intValue >>> 1;	//works on int values - unsigned right shift
+		System.out.println("Int Value is " + intValue); 
+	}
+
+}
+
+```
+
+
+## Day 2 - COLLECTIONS AND BITSET:
+
+**Certificate CLASS (create a certificate, clone, hashcode it, array of PublicKeys)**
+```
+package ro.ase.ism.sap.day2;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Certificate {
+	String name;
+	String organization;
+	String country;
+	String signature;
+	
+	ArrayList<Byte> publicKey = new ArrayList<>(128);
+	
+	public Certificate(String name, String organization, String country, String signature) {
+		super();
+		this.name = name;
+		this.organization = organization;
+		this.country = country;
+		this.signature = signature;
+	}
+	
+	@Override
+	public String toString() {
+		return this.name + " with signature " + this.signature;
+	}
+
+	@Override
+	public int hashCode() {
+		return this.signature.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		
+		if(!(obj instanceof Certificate)) {
+			return false;
+		}
+		
+		Certificate other = (Certificate) obj;
+		
+		return this.name.equals(other.name) && 
+				this.signature.equals(other.signature);
+	}
+
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+		Certificate copy = 
+				new Certificate(name, organization, country, signature);
+		
+		//don't do the shallow copy
+		//copy.publicKey = this.publicKey;
+		
+		//do deep-copy
+		copy.publicKey = 
+				(ArrayList<Byte>) this.publicKey.clone();
+		//alternative
+		//copy.publicKey = new ArrayList<>(this.publicKey);
+		
+		return copy;
+	}
+	
+	
+	
+	
+}
+```
+
+### MAIN: DAY 2 COLLECTIONS AND BITSET
+```
+package ro.ase.ism.sap.day2;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class Test {
+	
+	
+
+	public static void main(String[] args) {
+		
+		BitSet bitSet = new BitSet(32);
+		bitSet.set(0); //set to 1 the 1st bit from left to right
+		bitSet.set(1, false); //set to 0 the 2nd bit
+		
+		if(bitSet.get(0)) {
+			System.out.println("1st bit is 1");
+		}
+		else {
+			System.out.println("1st bit is 0");
+		}
+		
+		byte seed = (byte) 0b1100_1100;
+		for(int i = 0; i < 8; i++) {
+			byte mask = (byte) (1 << (7 - i));
+			bitSet.set(i, ((seed & mask) != 0));
+		}
+		
+		System.out.println("Bitset:");
+		for(int i = 0; i < bitSet.size(); i++) {
+			System.out.print(bitSet.get(i) ? 1 : 0);
+		}
+		
+		//3 types of collections
+		//List - like a dynamic array
+		//Set - like a dynamic array with UNIQUE values
+		//Map - like a dictionary with UNIQUE keys
+		
+		List<Integer> values = new ArrayList<>();
+		values.add(23);
+		values.add(56);
+		values.add(22);
+		values.add(56);
+		
+		System.out.println();
+		for(int value : values) {
+			System.out.println("List value is " + value);
+		}
+		
+		Set<Integer> uniqueValues = new HashSet<>();
+		uniqueValues.add(23);
+		uniqueValues.add(56);
+		uniqueValues.add(22);
+		uniqueValues.add(56);
+		
+		for(int value : uniqueValues) {
+			System.out.println("Unique List value is " + value);
+		}
+		
+		Map<Integer, String> users = new HashMap<>();
+		users.put(1, "John");
+		users.put(3, "Alice");
+		users.put(10, "Bob");
+		users.put(1, "Vader");
+		
+		String username = users.get(10);
+		if(username != null) {
+			System.out.println("User is " + username);
+		}
+		else {
+			System.out.println("No usee with id 10");
+		}
+		
+		for(Integer key : users.keySet()) {
+			System.out.println("User " + users.get(key) + " with id " + key);
+		}
+		
+		//collections and defined models
+		Set<Certificate> certificates = new HashSet<>();
+		
+		certificates.add(
+				new Certificate("John", "ISM", "RO", "A312B5AD"));
+		certificates.add(
+				new Certificate("John", "ISM", "RO", "A312B5AD"));
+		
+		for(Certificate certificate : certificates) {
+			System.out.println(certificate.toString()); 
+		}
+		
+	}
+
+}
+```
+
+## Day 2 - CRYPTO:
+
+**Provider | getProvider()**
+```
+
+		//test if a provider is available
+		
+		//String providerName = "SUN";
+		String providerName = "BC";
+		
+		Provider provider = Security.getProvider(providerName);
+		if(provider != null) {
+			System.out.println(providerName + " is available");
+		} else {
+			System.out.println(providerName + " is NOT available");
+		}
+		
+```
+
+**Load a provider at runtime - BouncyCastle**
+
+```
+
+		//load a provider at runtime - BouncyCastle
+		if(provider == null) {
+			Security.addProvider(new BouncyCastleProvider());
+		}
+		
+		provider = Security.getProvider(providerName);
+		if(provider != null) {
+			System.out.println(providerName + " is available");
+		} else {
+			System.out.println(providerName + " is NOT available");
+		}
+```
+
+**getSecureRandom | with bytes**
+```
+	public static byte[] getSecureRandom(int size) throws NoSuchAlgorithmException {
+		SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+		byte[] randomBytes = new byte[size];
+		secureRandom.nextBytes(randomBytes);
+		return randomBytes;
+	}
+```
+
+**getSecureRandom | with bytes & seed**
+```
+	public static byte[] getSecureRandom(int size, byte[] seed) throws NoSuchAlgorithmException {
+		SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+		secureRandom.setSeed(seed);
+		byte[] randomBytes = new byte[size];
+		secureRandom.nextBytes(randomBytes);
+		return randomBytes;
+	}
+```
+
+**HASH | SHA1 | MESSAGE DIGEST**
+```
+	public static byte[] getMessageDigest(String input) throws NoSuchAlgorithmException, NoSuchProviderException {
+		
+		MessageDigest md = MessageDigest.getInstance("SHA-1");
+		//use Bouncy Castle
+		//MessageDigest md = MessageDigest.getInstance("SHA-1","BC");
+		
+		//compute the hash in one step
+		return md.digest(input.getBytes());
+		
+		//alternative
+		//md.update(input.getBytes());
+		//return md.digest();
+	}
+```
+
+**HASH | MD5 | MESSAGE DIGEST**
+```
+	public static byte[] getMessageDigest(String input) throws NoSuchAlgorithmException, NoSuchProviderException {
+		
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		//use Bouncy Castle
+		//MessageDigest md = MessageDigest.getInstance("SHA-1","BC");
+		
+		//compute the hash in one step
+		return md.digest(input.getBytes());
+		
+		//alternative
+		//md.update(input.getBytes());
+		//return md.digest();
+	}
+```
+
+### MAIN: DAY 2 CRYPTO
+```
+package ro.ase.ism.sap.day2;
+
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.Provider;
+import java.security.Security;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+public class Test {
+
+	public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchProviderException, IOException {
+		
+		//test if a provider is available
+		
+		//String providerName = "SUN";
+		String providerName = "BC";
+		
+		Provider provider = Security.getProvider(providerName);
+		if(provider != null) {
+			System.out.println(providerName + " is available");
+		} else {
+			System.out.println(providerName + " is NOT available");
+		}
+		
+		
+		//load a provider at runtime - BouncyCastle
+		if(provider == null) {
+			Security.addProvider(new BouncyCastleProvider());
+		}
+		
+		provider = Security.getProvider(providerName);
+		if(provider != null) {
+			System.out.println(providerName + " is available");
+		} else {
+			System.out.println(providerName + " is NOT available");
+		}
+		
+		//test the Secure Random
+		byte[] randomBytes = RandomGenerator.getSecureRandom(16);
+		System.out.println("Secure random bytes");
+		System.out.println(Util.getHexString(randomBytes));
+		
+		byte[] seed = {0x01, 0x02, 0x03};
+		randomBytes = RandomGenerator.getSecureRandom(16, seed);
+		System.out.println("Secure random bytes");
+		System.out.println(Util.getHexString(randomBytes));
+		
+		//test hash algorithms
+		byte[] hash = Hash.getMessageDigest("Hello! How are you ?");
+		System.out.println("SHA1: ");
+		System.out.println(Util.getHexString(hash));
+		
+		byte[] fileHash = Hash.getFileMessageDigest("message.txt", "MD5", "BC");
+		System.out.println("File MD5: ");
+		System.out.println(Util.getHexString(fileHash));
+	}
+
+}
+```
 
 ## Day 2 - FILES:
-
-
 
 **Managing File System** 
 ```
@@ -56,7 +689,7 @@
 		printWriter.close();
 ```
 
-**Text File (red)** 
+**Text File (read)** 
 ```
 	
 		//reading from text files
@@ -92,7 +725,6 @@
 		dos.close();
 
 ```
-
 
 **Binary File (read)** 
 ```
@@ -140,7 +772,7 @@
 
 ```
 
-## MAIN DAY 2 FILES
+### MAIN: DAY 2 FILES
 ```
 package ro.ase.ism.sap.day2;
 
@@ -370,7 +1002,7 @@ public class Test {
 	}
 ```
 
-## MAIN DAY 3 HMAC & PBKDF
+### MAIN: DAY 3 HMAC & PBKDF
 ```
 
     package ro.ase.ism.sap.day3;
@@ -582,7 +1214,7 @@ public class KeyGenerator {
 
 
 
-## MAIN DAY 3 OTP
+### MAIN: DAY 3 OTP
 ```
 package ro.ase.ism.sap.day3;
 
@@ -611,7 +1243,7 @@ public class Test {
 
 ```
 
-## Day 3 - Symmetric:
+## Day 3 - SYMMETRIC:
 
 **ECB Encrypt / Decrypt** 
 ```
@@ -1021,7 +1653,7 @@ public class Test {
 
 ```
 
-## MAIN DAY 3 SYMMETRIC
+### MAIN: DAY 3 SYMMETRIC
 ```
 package ro.ase.ism.sap.day3;
 
@@ -1069,7 +1701,7 @@ public class Test {
 
 
 
-## Day 4 - Asymmetric:
+## Day 4 - ASYMMETRIC:
 
 **getHexString** 
 ```
@@ -1256,7 +1888,7 @@ KeyStoreManager.list(ks);
 ```
 
 
-## MAIN DAY 4 ASYMMETRIC
+### MAIN: DAY 4 ASYMMETRIC
 
 ```
 package ro.ase.ism.sap.day4;
