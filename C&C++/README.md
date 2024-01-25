@@ -1,6 +1,6 @@
 # C / C++
 
-## All the source code of the files is here:
+## All the source code (from the files) is here:
 
 ```
 #include <stdio.h>
