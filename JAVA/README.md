@@ -4,8 +4,8 @@
 ** Contents: **
 
 * Day 1: 
- * LFSR
-  * 1. [LFSR](#day-1---lfsr)
+	* LFSR
+		* [LFSR](#day-1---lfsr)
 
 String & Values
 1. [Strings | Hex | Bas64 conversion | byte[] to String | String to byte[] | Correct way to equal strings](#Link)
