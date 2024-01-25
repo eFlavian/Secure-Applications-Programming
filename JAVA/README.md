@@ -2045,10 +2045,193 @@ public class Test {
 
 # Extras:
 
-1. Generate the message digest according to MD5 algorithm for the decrypted
+1. Decrypt key.sec file using the public key extracted from provided pubISM.pem file
+using OpenSSL in C++
+```
+#include <iostream>
+#include <fstream>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+
+// Function to decrypt the file using the public key
+bool decryptFile(const std::string& inputFile, const std::string& outputFile, RSA* publicKey) {
+    // Open the input file for reading
+    std::ifstream encryptedFile(inputFile, std::ios::binary);
+    if (!encryptedFile.is_open()) {
+        std::cerr << "Error: Unable to open the encrypted file." << std::endl;
+        return false;
+    }
+
+    // Open the output file for writing
+    std::ofstream decryptedFile(outputFile, std::ios::binary);
+    if (!decryptedFile.is_open()) {
+        std::cerr << "Error: Unable to create the decrypted file." << std::endl;
+        return false;
+    }
+
+    // Get the size of the encrypted file
+    encryptedFile.seekg(0, std::ios::end);
+    size_t fileSize = encryptedFile.tellg();
+    encryptedFile.seekg(0, std::ios::beg);
+
+    // Allocate a buffer to hold the encrypted data
+    std::vector<char> encryptedData(fileSize);
+    encryptedFile.read(encryptedData.data(), fileSize);
+
+    // Allocate a buffer for the decrypted data
+    std::vector<char> decryptedData(RSA_size(publicKey));
+
+    // Decrypt the data using RSA_public_decrypt
+    int decryptedSize = RSA_public_decrypt(fileSize, reinterpret_cast<const unsigned char*>(encryptedData.data()),
+                                           reinterpret_cast<unsigned char*>(decryptedData.data()), publicKey, RSA_PKCS1_OAEP_PADDING);
+
+    if (decryptedSize == -1) {
+        std::cerr << "Error: RSA decryption failed." << std::endl;
+        return false;
+    }
+
+    // Write the decrypted data to the output file
+    decryptedFile.write(decryptedData.data(), decryptedSize);
+
+    // Close the files
+    encryptedFile.close();
+    decryptedFile.close();
+
+    std::cout << "Decryption successful. Decrypted data written to " << outputFile << std::endl;
+    return true;
+}
+
+int main() {
+    // Replace these paths with your actual file paths
+    std::string publicKeyFile = "pubISM.pem";
+    std::string encryptedFile = "key.sec";
+    std::string outputFile = "decrypted_key.txt";
+
+    // Initialize OpenSSL
+    OpenSSL_add_all_algorithms();
+    ERR_load_crypto_strings();
+
+    // Read the public key from the PEM file
+    FILE* publicKeyFilePtr = fopen(publicKeyFile.c_str(), "rb");
+    if (!publicKeyFilePtr) {
+        std::cerr << "Error: Unable to open the public key file." << std::endl;
+        return 1;
+    }
+
+    RSA* publicKey = PEM_read_RSA_PUBKEY(publicKeyFilePtr, nullptr, nullptr, nullptr);
+    fclose(publicKeyFilePtr);
+
+    if (!publicKey) {
+        std::cerr << "Error: Unable to read the public key from the PEM file." << std::endl;
+        return 1;
+    }
+
+    // Decrypt the file using the public key
+    bool success = decryptFile(encryptedFile, outputFile, publicKey);
+
+    // Free the RSA public key
+    RSA_free(publicKey);
+
+    // Clean up OpenSSL
+    ERR_free_strings();
+    EVP_cleanup();
+
+    return success ? 0 : 1;
+}
+
+```
+
+2. Decrypt Msg.enc file using the decrypted key.sec file content as AES key (CBC),
+using OpenSSL in C++.
+```
+#include <iostream>
+#include <fstream>
+#include <openssl/aes.h>
+
+// Function to decrypt the file using the AES key in CBC mode
+bool decryptFile(const std::string& inputFile, const std::string& outputFile, const unsigned char* aesKey) {
+    // Open the input file for reading
+    std::ifstream encryptedFile(inputFile, std::ios::binary);
+    if (!encryptedFile.is_open()) {
+        std::cerr << "Error: Unable to open the encrypted file." << std::endl;
+        return false;
+    }
+
+    // Open the output file for writing
+    std::ofstream decryptedFile(outputFile, std::ios::binary);
+    if (!decryptedFile.is_open()) {
+        std::cerr << "Error: Unable to create the decrypted file." << std::endl;
+        return false;
+    }
+
+    // Get the size of the encrypted file
+    encryptedFile.seekg(0, std::ios::end);
+    size_t fileSize = encryptedFile.tellg();
+    encryptedFile.seekg(0, std::ios::beg);
+
+    // Allocate a buffer to hold the encrypted data
+    std::vector<char> encryptedData(fileSize);
+    encryptedFile.read(encryptedData.data(), fileSize);
+
+    // Initialize AES decryption context
+    AES_KEY aesKeyStruct;
+    if (AES_set_decrypt_key(aesKey, 128, &aesKeyStruct) != 0) {
+        std::cerr << "Error: Unable to set AES decryption key." << std::endl;
+        return false;
+    }
+
+    // Decrypt the data using AES_decrypt in CBC mode
+    unsigned char iv[AES_BLOCK_SIZE]; // Initialization Vector (IV)
+    memset(iv, 0, sizeof(iv)); // You may need to set a proper IV
+
+    AES_cbc_encrypt(reinterpret_cast<const unsigned char*>(encryptedData.data()), 
+                    reinterpret_cast<unsigned char*>(decryptedFile), 
+                    fileSize, &aesKeyStruct, iv, AES_DECRYPT);
+
+    // Close the files
+    encryptedFile.close();
+    decryptedFile.close();
+
+    std::cout << "Decryption successful. Decrypted data written to " << outputFile << std::endl;
+    return true;
+}
+
+int main() {
+    // Replace these paths with your actual file paths
+    std::string encryptedFile = "Msg.enc";
+    std::string keyFile = "key.sec";
+    std::string outputFile = "decrypted_msg.txt";
+
+    // Read the AES key from the key file
+    std::ifstream keyFileStream(keyFile, std::ios::binary);
+    if (!keyFileStream.is_open()) {
+        std::cerr << "Error: Unable to open the key file." << std::endl;
+        return 1;
+    }
+
+    // Get the size of the key file
+    keyFileStream.seekg(0, std::ios::end);
+    size_t keySize = keyFileStream.tellg();
+    keyFileStream.seekg(0, std::ios::beg);
+
+    // Allocate a buffer to hold the key
+    std::vector<char> aesKey(keySize);
+    keyFileStream.read(aesKey.data(), keySize);
+
+    // Decrypt the file using the AES key
+    bool success = decryptFile(encryptedFile, outputFile, reinterpret_cast<const unsigned char*>(aesKey.data()));
+
+    // Close the key file
+    keyFileStream.close();
+
+    return success ? 0 : 1;
+}
+
+```
+
+3. Generate the message digest according to MD5 algorithm for the decrypted
 Msg.enc content, using a Java implementation. The first 16 bytes from Msg.enc are
 the IV used for MD5 algorithm.
-
 ```
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -2090,6 +2273,94 @@ public class MD5Example {
         } catch (Exception e) {
             throw new NoSuchAlgorithmException("MD5 algorithm not available", e);
         }
+    }
+}
+
+```
+
+4. Generate a X509 digital certificate by using the public key stored by pubISM.pem
+file (Java implementation).
+```
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+
+import java.io.FileInputStream;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.Security;
+import java.security.cert.X509Certificate;
+import java.util.Date;
+
+public class X509CertificateGenerator {
+
+    public static void main(String[] args) {
+        try {
+            // Load the public key from the PEM file (pubISM.pem)
+            // You can replace "pubISM.pem" with the actual path to your PEM file
+            FileInputStream fis = new FileInputStream("pubISM.pem");
+            byte[] publicKeyBytes = new byte[fis.available()];
+            fis.read(publicKeyBytes);
+            fis.close();
+
+            // Generate a key pair for the certificate (you can use the existing key pair)
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(2048); // Adjust the key size as needed
+            KeyPair keyPair = keyPairGenerator.generateKeyPair();
+
+            // Create a X.509 certificate
+            X509Certificate certificate = generateX509Certificate(keyPair, publicKeyBytes);
+
+            // Print the generated X.509 certificate
+            System.out.println("Generated X.509 Certificate:");
+            System.out.println(certificate);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static X509Certificate generateX509Certificate(KeyPair keyPair, byte[] publicKeyBytes) throws Exception {
+        // Set the certificate subject and issuer information
+        X500Name subject = new X500Name("CN=YourCommonName, O=YourOrganization");
+        X500Name issuer = subject; // Self-signed certificate
+
+        // Set the validity period of the certificate (e.g., 1 year)
+        Date startDate = new Date(System.currentTimeMillis());
+        Date endDate = new Date(System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000); // 1 year
+
+        // Create the X.509 certificate builder
+        X509v3CertificateBuilder certBuilder = new X509v3CertificateBuilder(
+                issuer,
+                new java.math.BigInteger(64, new java.security.SecureRandom()),
+                startDate,
+                endDate,
+                subject,
+                SubjectPublicKeyInfo.getInstance(ASN1Sequence.getInstance(publicKeyBytes))
+        );
+
+        // Add extensions (optional)
+
+        // Specify the signature algorithm (SHA256WithRSA, SHA512WithRSA, etc.)
+        String signatureAlgorithm = "SHA256WithRSA";
+
+        // Load the private key for signing (you can replace this with your private key logic)
+        PrivateKey privateKey = keyPair.getPrivate();
+
+        // Create the content signer
+        ContentSigner signer = new JcaContentSignerBuilder(signatureAlgorithm).build(privateKey);
+
+        // Build the X.509 certificate holder
+        X509CertificateHolder certHolder = certBuilder.build(signer);
+
+        // Convert the X.509 certificate holder to a Java X.509 certificate
+        JcaX509CertificateConverter certConverter = new JcaX509CertificateConverter();
+        certConverter.setProvider("BC"); // Bouncy Castle provider
+        return certConverter.getCertificate(certHolder);
     }
 }
 
