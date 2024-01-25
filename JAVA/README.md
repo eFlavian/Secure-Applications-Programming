@@ -10,10 +10,10 @@
 		* [Strings | Hex | Bas64 conversion | byte[] to String | String to byte[] | Correct way to equal strings](#main-day-1-string-and-values)
 * Day 2: 
 	* Collections and Bitset
-		* [Certificate Class | Clone | Array of PublicKeys](#Link)
+		* [Certificate Class | Clone | Array of PublicKeys](#certificate-class-create-a-certificate-clone-hashcode-it-array-of-publickeys)
 	* Crypto
-		* [Provider | getProvider()](#Link)
-		* [Provider | loadProvider()](#Link)
+		* [Provider | getProvider()](#provider--getprovider)
+		* [Provider | loadProvider()](#load-a-provider-at-runtime---bouncycastle)
 		* [With bytes | getSecureRandom()](#Link)
 		* [With bytes & seed | getSecureRandom()](#Link)
 		* [HASH | SHA1 | MESSAGE DIGEST](#Link)
@@ -573,7 +573,7 @@ public class Test {
 		}
 ```
 
-### ### **getSecureRandom | with bytes**
+### **getSecureRandom | with bytes**
 ```
 	public static byte[] getSecureRandom(int size) throws NoSuchAlgorithmException {
 		SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
@@ -583,7 +583,7 @@ public class Test {
 	}
 ```
 
-**getSecureRandom | with bytes & seed**
+### **getSecureRandom | with bytes & seed**
 ```
 	public static byte[] getSecureRandom(int size, byte[] seed) throws NoSuchAlgorithmException {
 		SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
