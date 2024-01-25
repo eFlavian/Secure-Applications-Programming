@@ -7,7 +7,7 @@
 	* LFSR
 		* [LFSR](#day-1---lfsr)
 	* String & Values
-		* [Strings | Hex | Bas64 conversion | byte[] to String | String to byte[] | Correct way to equal strings](#Link)
+		* [Strings | Hex | Bas64 conversion | byte[] to String | String to byte[] | Correct way to equal strings](#main-day-1-string-and-values)
 * Day 2: 
 	* Collections and Bitset
 		* [Certificate Class | Clone | Array of PublicKeys](#Link)
@@ -368,7 +368,7 @@ public class Test {
 
 ## Day 2 - COLLECTIONS AND BITSET:
 
-**Certificate CLASS (create a certificate, clone, hashcode it, array of PublicKeys)**
+### **Certificate CLASS (create a certificate, clone, hashcode it, array of PublicKeys)**
 ```
 package ro.ase.ism.sap.day2;
 
@@ -539,7 +539,7 @@ public class Test {
 
 ## Day 2 - CRYPTO:
 
-**Provider | getProvider()**
+### **Provider | getProvider()**
 ```
 
 		//test if a provider is available
@@ -556,7 +556,7 @@ public class Test {
 		
 ```
 
-**Load a provider at runtime - BouncyCastle**
+### **Load a provider at runtime - BouncyCastle**
 
 ```
 
@@ -573,7 +573,7 @@ public class Test {
 		}
 ```
 
-**getSecureRandom | with bytes**
+### ### **getSecureRandom | with bytes**
 ```
 	public static byte[] getSecureRandom(int size) throws NoSuchAlgorithmException {
 		SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
@@ -594,7 +594,7 @@ public class Test {
 	}
 ```
 
-**HASH | SHA1 | MESSAGE DIGEST**
+### **HASH | SHA1 | MESSAGE DIGEST**
 ```
 	public static byte[] getMessageDigest(String input) throws NoSuchAlgorithmException, NoSuchProviderException {
 		
@@ -611,7 +611,7 @@ public class Test {
 	}
 ```
 
-**HASH | MD5 | MESSAGE DIGEST**
+### **HASH | MD5 | MESSAGE DIGEST**
 ```
 	public static byte[] getMessageDigest(String input) throws NoSuchAlgorithmException, NoSuchProviderException {
 		
@@ -694,7 +694,7 @@ public class Test {
 
 ## Day 2 - FILES:
 
-**Managing File System** 
+### **Managing File System** 
 ```
 
 		//managing the file system
@@ -723,7 +723,7 @@ public class Test {
 		}
 ```
 
-**Create text file** 
+### **Create text file** 
 ```
 	
 		File messageTextFile = new File("message.txt");
@@ -732,7 +732,7 @@ public class Test {
 		}
 ```
 
-**Text File (write)** 
+### **Text File (write)** 
 ```
 	
 		//writing into text files
@@ -744,7 +744,7 @@ public class Test {
 		printWriter.close();
 ```
 
-**Text File (read)** 
+### **Text File (read)** 
 ```
 	
 		//reading from text files
@@ -759,7 +759,7 @@ public class Test {
 
 ```
 
-**Binary File (write)** 
+### **Binary File (write)** 
 ```
 	//writing into binary files
 		File dataFile = new File("mydata.dat");
@@ -781,7 +781,7 @@ public class Test {
 
 ```
 
-**Binary File (read)** 
+### **Binary File (read)** 
 ```
         FileInputStream fis = new FileInputStream(dataFile);
 		BufferedInputStream bis = new BufferedInputStream(fis);
@@ -804,7 +804,7 @@ public class Test {
 
 ```
 
-**Binary files with the legacy Random Access File class** 
+### **Binary files with the legacy Random Access File class** 
 ```
         FileInputStream fis = new FileInputStream(dataFile);
 		BufferedInputStream bis = new BufferedInputStream(fis);
@@ -975,7 +975,7 @@ public class Test {
 > PBKDF is a family of functions designed to derive cryptographic keys from a password. It adds computational cost to the process, making it more resistant to brute-force attacks.
 
 
-**HMAC - getHmac** 
+### **HMAC - getHmac** 
 ```
 	public static byte[] getHmac(String input, String secret, String algorithm) 
 			throws NoSuchAlgorithmException, InvalidKeyException
@@ -989,7 +989,7 @@ public class Test {
 
 ```
 
-**HMAC - getFileHmac** 
+### **HMAC - getFileHmac** 
 ```
 
 	public static byte[] getFileHmac(
@@ -1026,7 +1026,7 @@ public class Test {
 	}
 ```
 
-**PBKDF - getPBKDF** 
+### **PBKDF - getPBKDF** 
 ```
 	public static byte[] getPBKDF(
 			String userPassword, 
@@ -1049,7 +1049,7 @@ public class Test {
 ```
 
 
-**HASH** 
+### **HASH** 
 ```
 	public static byte[] getHash(String input, String algorithm) throws NoSuchAlgorithmException {
 		MessageDigest md = MessageDigest.getInstance(algorithm);
@@ -1124,7 +1124,7 @@ public class Test {
 > OTP is a security concept where a unique password is generated for each authentication session, and it is valid for only a short period. 
 > This adds an extra layer of security, especially in scenarios like two-factor authentication.
 
-**KeyGenerator (based on secretSeed and SHA1PRNG)** 
+### **KeyGenerator (based on secretSeed and SHA1PRNG)** 
 ```
 public class KeyGenerator {
 	
@@ -1152,7 +1152,7 @@ public class KeyGenerator {
 ```
 
 
-**OTP - encryptFile / decryptFile** 
+### **OTP - encryptFile / decryptFile** 
 ```
 
 	public static void encryptFile(
@@ -1217,7 +1217,7 @@ public class KeyGenerator {
 ```
 
 
-**OTP - decryptFile (.otp, .key, .txt) / decryptFile (.otp, .txt, .txt): Getting the key here.** 
+### **OTP - decryptFile (.otp, .key, .txt) / decryptFile (.otp, .txt, .txt): Getting the key here.** 
 ```
 
 	public static void decryptFile(
@@ -1300,7 +1300,7 @@ public class Test {
 
 ## Day 3 - SYMMETRIC:
 
-**ECB Encrypt / Decrypt** 
+### **ECB Encrypt / Decrypt** 
 ```
 
 	public static void encrypt(
@@ -1381,7 +1381,7 @@ public class Test {
 	}
 ```
 
-**CBC Encrypt / Decrypt** 
+### **CBC Encrypt / Decrypt** 
 ```
 
 	public static void encrypt(
@@ -1490,7 +1490,7 @@ public class Test {
 
 ```
 
-**CTR Encrypt / Decrypt** 
+### **CTR Encrypt / Decrypt** 
 ```
 
 	public static void encrypt(
@@ -1599,7 +1599,7 @@ public class Test {
 
 ```
 
-**CTS Encrypt / Decrypt** 
+### **CTS Encrypt / Decrypt** 
 ```
 
 	public static void encrypt(
@@ -1758,7 +1758,7 @@ public class Test {
 
 ## Day 4 - ASYMMETRIC:
 
-**getHexString** 
+### **getHexString** 
 ```
 	public static String getHexString(byte[] value) {
 		StringBuilder result = new StringBuilder();
@@ -1770,7 +1770,7 @@ public class Test {
 	}
 ```
 
-**getKeyStore** 
+### **getKeyStore** 
 
 ```
 	public static KeyStore getKeyStore(
@@ -1792,7 +1792,7 @@ public class Test {
 	}
 ```
 
-**listKeyStore** 
+### **listKeyStore** 
 
 ```
 KeyStoreManager.list(ks);
@@ -1814,7 +1814,7 @@ KeyStoreManager.list(ks);
 	}
 ```
 
-**getPublicKey (publicKey from KeyStore)** 
+### **getPublicKey (publicKey from KeyStore)** 
 
 ```
 	public static PublicKey getPublicKey(String alias, KeyStore ks) throws KeyStoreException {
@@ -1829,7 +1829,7 @@ KeyStoreManager.list(ks);
 	}
 ```
 
-**getPrivateKey (privateKey from KeyStore)** 
+### **getPrivateKey (privateKey from KeyStore)** 
 
 ```
 	public static PrivateKey getPrivateKey(
@@ -1845,7 +1845,7 @@ KeyStoreManager.list(ks);
 	}
 ```
 
-**getCertificateKey (publicKey from certificate)** 
+### **getCertificateKey (publicKey from certificate)** 
 
 ```
 	public static PublicKey getCertificateKey(String certificateFile) throws CertificateException, IOException {
@@ -1864,7 +1864,7 @@ KeyStoreManager.list(ks);
 	}
 ```
 
-**randomAESKey / generateKey(128): AES Random Key** 
+### **randomAESKey / generateKey(128): AES Random Key** 
 ```
 	public static byte[] generateKey(int noBytes) throws NoSuchAlgorithmException {
 		KeyGenerator keyGenerator = 
@@ -1874,7 +1874,7 @@ KeyStoreManager.list(ks);
 	}
 ```
 
-**Asymmetric Cipher: RSA Encrypt (publicKey + AES input (or any input in byte[])) / encrypt()** 
+### **Asymmetric Cipher: RSA Encrypt (publicKey + AES input (or any input in byte[])) / encrypt()** 
 
 ```
 	public static byte[] encrypt(Key key, byte[] input) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -1885,7 +1885,7 @@ KeyStoreManager.list(ks);
 ```
 
 
-**Asymmetric Cipher: RSA Decrypt (privateKey + AES input (or any input in byte[])) / decrypt()** 
+### **Asymmetric Cipher: RSA Decrypt (privateKey + AES input (or any input in byte[])) / decrypt()** 
 
 ```
 	public static byte[] decrypt(Key key, byte[] input) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -1896,7 +1896,7 @@ KeyStoreManager.list(ks);
 ```
 
 
-**Generate a DIGITAL SIGNATURE (RSA) for a file with a private key (from the keystore) / signFile()** 
+### **Generate a DIGITAL SIGNATURE (RSA) for a file with a private key (from the keystore) / signFile()** 
 
 ```
 	public static byte[] signFile(String filename, PrivateKey key) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
@@ -1918,7 +1918,7 @@ KeyStoreManager.list(ks);
 	}
 ```
 
-**Validate the DIGITAL SIGNATURE with the public key (from the certificate) / hasValidSignature()** 
+### **Validate the DIGITAL SIGNATURE with the public key (from the certificate) / hasValidSignature()** 
 
 ```
 	public static boolean hasValidSignature(
