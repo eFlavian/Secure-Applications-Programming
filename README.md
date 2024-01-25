@@ -1,6 +1,8 @@
 
 # SAP: Secure applications programming
 
+![super duper](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcmYza2ppdWJ0cnh1MXd2dTUwaGNnNWMxMXJ0dmNqajM4dDV3cHNmcSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/QMHoU66sBXqqLqYvGO/giphy.gif)
+
 ## Symmetric Key Cryptography:
 
 **Single Key:** Symmetric key cryptography, also known as secret-key or private-key cryptography, uses a single secret key for both encryption and decryption.

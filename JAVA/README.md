@@ -2232,6 +2232,9 @@ int main() {
 3. Generate the message digest according to MD5 algorithm for the decrypted
 Msg.enc content, using a Java implementation. The first 16 bytes from Msg.enc are
 the IV used for MD5 algorithm.
+
+> Well... MD5 doesn't use IV 😂😂😂. But the code must ignore the first 16 bytes bcs are used as IV.
+
 ```
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -2245,7 +2248,11 @@ public class MD5Example {
             byte[] encryptedContent = // Initialize with your actual encrypted content;
 
             // Extract the first 16 bytes as IV
-            byte[] iv = Arrays.copyOfRange(encryptedContent, 0, 16);
+            byte[] iv = Arrays.copyOfRange(encryptedContent, 0, 16); // original, from, to
+
+				// Remove the IV from the encryptedContent
+				byte[] contentWithoutIV = Arrays.copyOfRange(encryptedContent, 16, encryptedContent.length); // original, from, to
+
 
             // Decrypt the content (replace this with your decryption logic)
             byte[] decryptedContent = // Replace with your decryption logic;
