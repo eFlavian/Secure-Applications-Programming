@@ -54,6 +54,7 @@
 		* [Asymmetric Cipher: RSA Decrypt (privateKey + AES input (or any input in byte[])) / decrypt()](#asymmetric-cipher-rsa-decrypt-privatekey--aes-input-or-any-input-in-byte--decrypt)
 		* [Generate a DIGITAL SIGNATURE (RSA) for a file with a private key (from the keystore) / signFile()](#generate-a-digital-signature-rsa-for-a-file-with-a-private-key-from-the-keystore--signfile)
 		* [Validate the DIGITAL SIGNATURE with the public key (from the certificate) / hasValidSignature()](#validate-the-digital-signature-with-the-public-key-from-the-certificate--hasvalidsignature)
+* [EXTRAS](#EXTRAS)
 
 ## Day 1 - LFSR:
 
@@ -2039,4 +2040,57 @@ public class Test {
 	}
 
 }
+```
+
+
+#Extras:
+
+1. Generate the message digest according to MD5 algorithm for the decrypted
+Msg.enc content, using a Java implementation. The first 16 bytes from Msg.enc are
+the IV used for MD5 algorithm.
+
+```
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+
+public class MD5Example {
+
+    public static void main(String[] args) {
+        try {
+            // Assuming Msg.enc is your encrypted content
+            byte[] encryptedContent = // Initialize with your actual encrypted content;
+
+            // Extract the first 16 bytes as IV
+            byte[] iv = Arrays.copyOfRange(encryptedContent, 0, 16);
+
+            // Decrypt the content (replace this with your decryption logic)
+            byte[] decryptedContent = // Replace with your decryption logic;
+
+            // Generate the message digest using MD5 with IV as input
+            byte[] messageDigest = getMessageDigest(decryptedContent, iv);
+
+            // Print or use the message digest as needed
+            System.out.println(Arrays.toString(messageDigest));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static byte[] getMessageDigest(byte[] input, byte[] iv) throws NoSuchAlgorithmException {
+        try {
+            // Concatenate IV and input data
+            byte[] dataWithIV = new byte[iv.length + input.length];
+            System.arraycopy(iv, 0, dataWithIV, 0, iv.length);
+            System.arraycopy(input, 0, dataWithIV, iv.length, input.length);
+
+            // Use MD5 algorithm to compute the hash
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            return md.digest(dataWithIV);
+        } catch (Exception e) {
+            throw new NoSuchAlgorithmException("MD5 algorithm not available", e);
+        }
+    }
+}
+
 ```
