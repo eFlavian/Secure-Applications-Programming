@@ -7,63 +7,63 @@
 	* LFSR
 		* [LFSR](#day-1---lfsr)
 
-String & Values
-1. [Strings | Hex | Bas64 conversion | byte[] to String | String to byte[] | Correct way to equal strings](#Link)
+	* String & Values
+		*[Strings | Hex | Bas64 conversion | byte[] to String | String to byte[] | Correct way to equal strings](#Link)
 
-Day 2: 
-Collections and Bitset
-3. [Certificate Class | Clone | Array of PublicKeys](#Link)
+* Day 2: 
+	* Collections and Bitset
+		* [Certificate Class | Clone | Array of PublicKeys](#Link)
 
-Crypto
-3. [Provider | getProvider()](#Link)
-3. [Provider | loadProvider()](#Link)
-3. [With bytes | getSecureRandom()](#Link)
-3. [With bytes & seed | getSecureRandom()](#Link)
-3. [HASH | SHA1 | MESSAGE DIGEST](#Link)
-3. [HASH | MD5 | MESSAGE DIGEST](#Link)
+	* Crypto
+		* [Provider | getProvider()](#Link)
+		* [Provider | loadProvider()](#Link)
+		* [With bytes | getSecureRandom()](#Link)
+		* [With bytes & seed | getSecureRandom()](#Link)
+		* [HASH | SHA1 | MESSAGE DIGEST](#Link)
+		* [HASH | MD5 | MESSAGE DIGEST](#Link)
 
-Files
-3. [Managing File System](#Link)
-3. [Create text file](#Link)
-3. [Write text file](#Link)
-3. [Read text file](#Link)
-3. [Write binary file](#Link)
-3. [Read binary file](#Link)
-3. [Binary files with the legacy Random Access File class](#Link)
+	* Files
+		* [Managing File System](#Link)
+		* [Create text file](#Link)
+		* [Write text file](#Link)
+		* [Read text file](#Link)
+		* [Write binary file](#Link)
+		* [Read binary file](#Link)
+		* [Binary files with the legacy Random Access File class](#Link)
 
 
-Day 3: 
-HMAC & PBKDF
-3. [HMAC | getHmac()](#Link)
-3. [HMAC | getFileHmac()](#Link)
-3. [HMAC | getPBKDF()](#Link)
-3. [HASH | getHash() | MESSAGE DIGEST](#Link)
+* Day 3: 
+	* HMAC & PBKDF
+		* [HMAC | getHmac()](#Link)
+		* [HMAC | getFileHmac()](#Link)
+		* [HMAC | getPBKDF()](#Link)
+		* [HASH | getHash() | MESSAGE DIGEST](#Link)
 
-OTP
-3. [KeyGenerator (based on secretSeed and SHA1PRNG)](#Link)
-3. [OTP | encryptFile() | decryptFile()](#Link)
-3. [OTP | decryptFile (.otp, .key, .txt) / decryptFile (.otp, .txt, .txt): Getting the key here.](#Link)
-3. [HASH | getHash() | MESSAGE DIGEST](#Link)
+	* OTP
+		* [KeyGenerator (based on secretSeed and SHA1PRNG)](#Link)
+		* [OTP | encryptFile() | decryptFile()](#Link)
+		* [OTP | decryptFile (.otp, .key, .txt) / decryptFile (.otp, .txt, .txt): Getting the key here.](#Link)
+		* [HASH | getHash() | MESSAGE DIGEST](#Link)
 
-SYMMETRIC
-3. [ECB | Encrypt / Decrypt](#Link)
-3. [CBC | Encrypt / Decrypt](#Link)
-3. [CTR | Encrypt / Decrypt](#Link)
-3. [CTS | Encrypt / Decrypt](#Link)
+	* SYMMETRIC
+		* [ECB | Encrypt / Decrypt](#Link)
+		* [CBC | Encrypt / Decrypt](#Link)
+		* [CTR | Encrypt / Decrypt](#Link)
+		* [CTS | Encrypt / Decrypt](#Link)
 
-Day 4: 
-ASYMMETRIC
-3. [getHexString()](#Link)
-3. [getKeyStore()](#Link)
-3. [listKeyStore()](#Link)
-3. [getPublicKey (publicKey from KeyStore)](#Link)
-3. [getPrivateKey (privateKey from KeyStore)](#Link)
-3. [getCertificateKey (publicKey from Certificate)](#Link)
-3. [randomAESKey / generateKey(128): AES Random Key](#Link)
-3. [Asymmetric Cipher: RSA Encrypt (publicKey + AES input (or any input in byte[])) / encrypt()](#Link)
-3. [Asymmetric Cipher: RSA Decrypt (privateKey + AES input (or any input in byte[])) / decrypt()](#Link)
-3. [Generate a DIGITAL SIGNATURE (RSA) for a file with a private key (from the keystore) / signFile()](#Link)
-3. [Validate the DIGITAL SIGNATURE with the public key (from the certificate) / hasValidSignature()](#Link)
+* Day 4: 
+	* ASYMMETRIC
+		* [getHexString()](#Link)
+		* [getKeyStore()](#Link)
+		* [listKeyStore()](#Link)
+		* [getPublicKey (publicKey from KeyStore)](#Link)
+		* [getPrivateKey (privateKey from KeyStore)](#Link)
+		* [getCertificateKey (publicKey from Certificate)](#Link)
+		* [randomAESKey / generateKey(128): AES Random Key](#Link)
+		* [Asymmetric Cipher: RSA Encrypt (publicKey + AES input (or any input in byte[])) / encrypt()](#Link)
+		* [Asymmetric Cipher: RSA Decrypt (privateKey + AES input (or any input in byte[])) / decrypt()](#Link)
+		* [Generate a DIGITAL SIGNATURE (RSA) for a file with a private key (from the keystore) / signFile()](#Link)
+		* [Validate the DIGITAL SIGNATURE with the public key (from the certificate) / hasValidSignature()](#Link)
 
 ## Day 1 - LFSR:
 
