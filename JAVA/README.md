@@ -7,7 +7,7 @@
 	* LFSR
 		* [LFSR](#day-1---lfsr)
 	* String & Values
-		*[Strings | Hex | Bas64 conversion | byte[] to String | String to byte[] | Correct way to equal strings](#Link)
+		* [Strings | Hex | Bas64 conversion | byte[] to String | String to byte[] | Correct way to equal strings](#Link)
 * Day 2: 
 	* Collections and Bitset
 		* [Certificate Class | Clone | Array of PublicKeys](#Link)
