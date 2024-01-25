@@ -54,7 +54,7 @@
 		* [Asymmetric Cipher: RSA Decrypt (privateKey + AES input (or any input in byte[])) / decrypt()](#asymmetric-cipher-rsa-decrypt-privatekey--aes-input-or-any-input-in-byte--decrypt)
 		* [Generate a DIGITAL SIGNATURE (RSA) for a file with a private key (from the keystore) / signFile()](#generate-a-digital-signature-rsa-for-a-file-with-a-private-key-from-the-keystore--signfile)
 		* [Validate the DIGITAL SIGNATURE with the public key (from the certificate) / hasValidSignature()](#validate-the-digital-signature-with-the-public-key-from-the-certificate--hasvalidsignature)
-* [EXTRAS](#EXTRAS)
+* [EXTRAS](#Extras)
 
 ## Day 1 - LFSR:
 
@@ -2043,7 +2043,7 @@ public class Test {
 ```
 
 
-#Extras:
+# Extras:
 
 1. Generate the message digest according to MD5 algorithm for the decrypted
 Msg.enc content, using a Java implementation. The first 16 bytes from Msg.enc are
