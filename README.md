@@ -50,10 +50,15 @@
 - keytool (merge doar cu jdk/java in env variables) Se poate realiza si mergand in “Java/jdk-11/bin” si se deschide aici cmd cat sa se foloseasca keytool.exe direct.
 
 **Keytool command:**
+
+**Se genereaza keystore cu un pair de cheie publica + cheie privata**
 ```
 keytool.exe -genkey -keyalg RSA -alias ismkey1 -keypass passism1 -storepass passks -keystore ismkeystore.ks -dname "cn=ISM, ou=ISM, o=IT&C Security Master, c=RO"
-keytool.exe -genkey -keyalg RSA -alias ismkey2 -keypass passism2 -storepass passks -keystore ismkeystore.ks -dname "cn=ISM, ou=ISM, o=IT&C Security Master, c=RO"
-keytool.exe -export -alias ismkey1 -file ISMCertificateX509.cer -keystore ismkeystore.ks -storepass passks   **(SE EXPORTA CHEIA PUBLICA: adica se genereaza certificatul)**
+```
+
+**Se genereaza certificatul (se exporta public key)**
+```
+keytool.exe -export -alias ismkey1 -file ISMCertificateX509.cer -keystore ismkeystore.ks -storepass passks
 ```
 
 > CN : CommonName. OU : OrganizationalUnit. O : Organization. L : Locality
