@@ -1,19 +1,16 @@
 
 # JAVA
 
-** Contents: **
+**Contents:**
 
 * Day 1: 
 	* LFSR
 		* [LFSR](#day-1---lfsr)
-
 	* String & Values
 		*[Strings | Hex | Bas64 conversion | byte[] to String | String to byte[] | Correct way to equal strings](#Link)
-
 * Day 2: 
 	* Collections and Bitset
 		* [Certificate Class | Clone | Array of PublicKeys](#Link)
-
 	* Crypto
 		* [Provider | getProvider()](#Link)
 		* [Provider | loadProvider()](#Link)
@@ -21,7 +18,6 @@
 		* [With bytes & seed | getSecureRandom()](#Link)
 		* [HASH | SHA1 | MESSAGE DIGEST](#Link)
 		* [HASH | MD5 | MESSAGE DIGEST](#Link)
-
 	* Files
 		* [Managing File System](#Link)
 		* [Create text file](#Link)
@@ -30,27 +26,22 @@
 		* [Write binary file](#Link)
 		* [Read binary file](#Link)
 		* [Binary files with the legacy Random Access File class](#Link)
-
-
 * Day 3: 
 	* HMAC & PBKDF
 		* [HMAC | getHmac()](#Link)
 		* [HMAC | getFileHmac()](#Link)
 		* [HMAC | getPBKDF()](#Link)
 		* [HASH | getHash() | MESSAGE DIGEST](#Link)
-
 	* OTP
 		* [KeyGenerator (based on secretSeed and SHA1PRNG)](#Link)
 		* [OTP | encryptFile() | decryptFile()](#Link)
 		* [OTP | decryptFile (.otp, .key, .txt) / decryptFile (.otp, .txt, .txt): Getting the key here.](#Link)
 		* [HASH | getHash() | MESSAGE DIGEST](#Link)
-
 	* SYMMETRIC
 		* [ECB | Encrypt / Decrypt](#Link)
 		* [CBC | Encrypt / Decrypt](#Link)
 		* [CTR | Encrypt / Decrypt](#Link)
 		* [CTS | Encrypt / Decrypt](#Link)
-
 * Day 4: 
 	* ASYMMETRIC
 		* [getHexString()](#Link)
