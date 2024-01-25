@@ -1,123 +1,288 @@
 
-# SAP: Secure applications programming
+# JAVA
 
-## Symmetric Key Cryptography:
+## Day 4 - Asymmetric:
 
-**Single Key:** Symmetric key cryptography, also known as secret-key or private-key cryptography, uses a single secret key for both encryption and decryption.
-
-**Efficiency:** It is computationally efficient and faster than asymmetric key cryptography because the same key is used for both encryption and decryption processes.
-
-**Examples:** Common symmetric key algorithms include DES (Data Encryption Standard), AES (Advanced Encryption Standard), and 3DES (Triple DES).
-
-
-## Asymmetric Key Cryptography:
-
-**Key Pairs:** Asymmetric key cryptography, also known as public-key cryptography, involves a pair of keys: a public key and a private key. The public key is shared openly, while the private key is kept secret.
-
-**Encryption and Decryption:** The public key is used for encryption, and the private key is used for decryption. Messages encrypted with the public key can only be decrypted with the corresponding private key, and vice versa.
-
-**Security:** Asymmetric cryptography provides a higher level of security compared to symmetric cryptography, especially in key distribution and exchange scenarios.
-
-**Examples:** RSA (Rivest-Shamir-Adleman), ECC (Elliptic Curve Cryptography), and DSA (Digital Signature Algorithm) are common asymmetric key algorithms.
-
-
-## Key Concepts:
-
-**Public Key:** The public key is shared openly and is used for encryption. It is safe to distribute widely.
-
-**Private Key:** The private key is kept secret and is used for decryption. It must be kept confidential to maintain the security of the communication.
-
-
-## Use Cases:
-
-**Symmetric key** cryptography is often used for encrypting large amounts of data or for securing communication channels where a shared secret key can be used.
-
-**Asymmetric key** cryptography is commonly used for key exchange, digital signatures, and securing communication channels where the secure distribution of keys is challenging.
-
-
-## Generating RSA (asymmetric public/private key):
-
-- cmd -> ssh-keygen
-
-![Alt text](image.png)
-
-- putty key generator (key-ul este encoded in base64, incepe dupa prefixul “ssh-rsa” si are marcator de final ==, “rsa-key-20231115” fiind sufix). Cand dai save public key, il salvezi ca si .cer
-
-![Alt text](image-1.png)
-
-- keytool (merge doar cu jdk/java in env variables) Se poate realiza si mergand in “Java/jdk-11/bin” si se deschide aici cmd cat sa se foloseasca keytool.exe direct.
-
-**Keytool command:**
+**getHexString** 
 ```
-keytool.exe -genkey -keyalg RSA -alias ismkey1 -keypass passism1 -storepass passks -keystore ismkeystore.ks -dname "cn=ISM, ou=ISM, o=IT&C Security Master, c=RO"
-keytool.exe -genkey -keyalg RSA -alias ismkey2 -keypass passism2 -storepass passks -keystore ismkeystore.ks -dname "cn=ISM, ou=ISM, o=IT&C Security Master, c=RO"
-keytool.exe -export -alias ismkey1 -file ISMCertificateX509.cer -keystore ismkeystore.ks -storepass passks   **(SE EXPORTA CHEIA PUBLICA: adica se genereaza certificatul)**
+	public static String getHexString(byte[] value) {
+		StringBuilder result = new StringBuilder();
+		result.append("0x");
+		for(byte b : value) {
+			result.append(String.format(" %02X", b));
+		}
+		return result.toString();
+	}
 ```
 
-**Keytool adding certificate:**
+**getKeyStore** 
+
 ```
-keytool -importcert -file certificate.cer -keystore keystore.jks -alias "ismasero"    **(SE IMPORTA CHEIA PUBLICA)**
-```
-
-**Note:**
-> keytool.exe -genkey -keyalg RSA -alias ismkey1 -keypass passism1 -storepass passks -keystore ismkeystore.ks -dname "cn=ISM, ou=ISM, o=IT&C Security Master, c=RO"
-
-> Can be seen 2 levels of protection: -keypass: parola la cheia privata, -storepass: parola la store-ul care contine mai multe chestii. Ca o baza de date.
-
-
-
-## OpenSSL installation
-
-## **Variant 1** (whole system, but latest version)
-```
-git clone https://github.com/Microsoft/vcpkg
-cd vcpkg
-bootstrap-vcpkg.bat
-vcpkg integrate install
-
-vcpkg search ssl
-vcpkg install openssl-windows --triplet x64-windows
+	public static KeyStore getKeyStore(
+			String keyStoreFile,
+			String keyStorePass, 
+			String keyStoreType) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
+		File file = new File(keyStoreFile);
+		if(!file.exists()) {
+			throw new UnsupportedOperationException("Missing key store file");
+		}
+		
+		FileInputStream fis = new FileInputStream(file);
+		
+		KeyStore ks = KeyStore.getInstance(keyStoreType);
+		ks.load(fis, keyStorePass.toCharArray());
+		
+		fis.close();
+		return ks;
+	}
 ```
 
-**Note: Restart Visual Studio for changes to take effect.**
+**listKeyStore** 
+
+```
+KeyStoreManager.list(ks);
+
+	public static void list(KeyStore ks) throws KeyStoreException {
+		System.out.println("Key store content: ");
+		Enumeration<String> aliases = ks.aliases();
+		
+		while(aliases.hasMoreElements()) {
+			String alias = aliases.nextElement();
+			System.out.println("Entry: " + alias);
+			if(ks.isCertificateEntry(alias)) {
+				System.out.println("-- Is a certificate");
+			}
+			if(ks.isKeyEntry(alias)) {
+				System.out.println("-- Is a key pair");
+			}
+		}
+	}
+```
+
+**getPublicKey (publicKey from KeyStore)** 
+
+```
+	public static PublicKey getPublicKey(String alias, KeyStore ks) throws KeyStoreException {
+		if(ks == null) {
+			throw new UnsupportedOperationException("Missing Key Store");
+		}
+		if(ks.containsAlias(alias)) {
+			return ks.getCertificate(alias).getPublicKey();
+		} else {
+			return null;
+		}
+	}
+```
+
+**getPrivateKey (publicKey from KeyStore)** 
+
+```
+	public static PrivateKey getPrivateKey(
+			String alias, String keyPass, KeyStore ks ) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException {
+		if(ks == null) {
+			throw new UnsupportedOperationException("Missing Key Store");
+		}
+		if(ks.containsAlias(alias)) {
+			return (PrivateKey) ks.getKey(alias, keyPass.toCharArray());
+		} else {
+			return null;
+		}
+	}
+```
+
+**getCertificateKey (publicKey from certificate)** 
+
+```
+	public static PublicKey getCertificateKey(String certificateFile) throws CertificateException, IOException {
+		File file = new File(certificateFile);
+		if(!file.exists()) {
+			throw new UnsupportedOperationException("****Missing file****");
+		}
+		FileInputStream fis = new FileInputStream(file);
+		
+		CertificateFactory certFactory = 
+				CertificateFactory.getInstance("X.509");
+		X509Certificate certificate = 
+				(X509Certificate) certFactory.generateCertificate(fis);
+		fis.close();
+		return certificate.getPublicKey();	
+	}
+```
+
+**randomAESKey / generateKey(128): AES Random Key** 
+```
+	public static byte[] generateKey(int noBytes) throws NoSuchAlgorithmException {
+		KeyGenerator keyGenerator = 
+				KeyGenerator.getInstance("AES");
+		keyGenerator.init(noBytes);
+		return keyGenerator.generateKey().getEncoded();
+	}
+```
+
+**Asymmetric Cipher: RSA Encrypt (publicKey + AES input (or any input in byte[])) / encrypt()** 
+
+```
+	public static byte[] encrypt(Key key, byte[] input) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+		Cipher cipher = Cipher.getInstance("RSA");
+		cipher.init(Cipher.ENCRYPT_MODE, key);
+		return cipher.doFinal(input);
+	}
+```
 
 
+**Asymmetric Cipher: RSA Decrypt (privateKey + AES input (or any input in byte[])) / decrypt()** 
 
-## **Variant 2** (local on the project, with the [binary bundle x86](https://portal.ism.ase.ro/mod/folder/view.php?id=450) / [instant download](https://portal.ism.ase.ro/pluginfile.php/1309/mod_folder/content/0/openssl111l-build.zip?forcedownload=1))
+```
+	public static byte[] decrypt(Key key, byte[] input) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+		Cipher cipher = Cipher.getInstance("RSA");
+		cipher.init(Cipher.DECRYPT_MODE, key);
+		return cipher.doFinal(input);
+	}
+```
 
-**ATTENTION: BEING THE BUNDLE ON 32 BIT, YOU HAVE TO USE THE X86 COMPILER NOT THE X64 ONE !!**
 
-![Alt text](image-2.png)
-![Alt text](image-3.png)
-![Alt text](image-4.png)
-![Alt text](image-5.png)
+**Generate a DIGITAL SIGNATURE (RSA) for a file with a private key (from the keystore) / signFile()** 
+
+```
+	public static byte[] signFile(String filename, PrivateKey key) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+		File file = new File(filename);
+		if(!file.exists()) {
+			throw new FileNotFoundException();
+		}
+		FileInputStream fis = new FileInputStream(file);
+		
+		byte[] fileContent = fis.readAllBytes();
+		
+		fis.close();
+		
+		Signature signature = Signature.getInstance("SHA256withRSA");
+		signature.initSign(key);
+		
+		signature.update(fileContent);
+		return signature.sign();		
+	}
+```
+
+**Validate the DIGITAL SIGNATURE with the public key (from the certificate) / hasValidSignature()** 
+
+```
+	public static boolean hasValidSignature(
+			String filename, PublicKey key, byte[] signature) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+		
+		File file = new File(filename);
+		if(!file.exists()) {
+			throw new FileNotFoundException();
+		}
+		
+		FileInputStream fis = new FileInputStream(file);	
+		byte[] fileContent = fis.readAllBytes();	
+		fis.close();
+		
+		Signature signatureModule = Signature.getInstance("SHA256withRSA");
+		signatureModule.initVerify(key);
+		
+		signatureModule.update(fileContent);
+		return signatureModule.verify(signature);
+		
+	}
+```
 
 
-## CBC Figure
-![Alt text](image-6.png)
+## MAIN DAY 4
 
-## Digital Signature
-![Alt text](image-7.png)
+```
+package ro.ase.ism.sap.day4;
 
-### **Workflow:**
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Security;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.spec.PKCS8EncodedKeySpec;
 
-1. **Sender (creates a message digest for the plain text)**:
-> The sender uses a hash function to create a fixed-size message digest (hash value) from the original plain text.
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
-2. **Message digest is encrypted with the private key of the sender**:
-> The sender then encrypts the message digest with their private key. This process is known as creating a digital signature.
+public class Test {
+	
+	public static String getHexString(byte[] value) {
+		StringBuilder result = new StringBuilder();
+		result.append("0x");
+		for(byte b : value) {
+			result.append(String.format(" %02X", b));
+		}
+		return result.toString();
+	}
 
-3. **Destination (recipient) receives plain text + the digital signature:**
-> The recipient receives both the original plain text and the digital signature.
+	public static void main(String[] args) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, UnrecoverableKeyException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, SignatureException {
 
-4. **Decrypts with the public key of the sender:**
-> The recipient decrypts the received digital signature using the public key of the sender. This step ensures that only the sender, who possesses the corresponding private key, could have created this specific digital signature.
+		KeyStore ks = KeyStoreManager.getKeyStore(
+				"ismkeystore.ks", "passks", "pkcs12");
+		KeyStoreManager.list(ks);
+		
+		PublicKey pubIsm1 = KeyStoreManager.getPublicKey("ismkey1", ks);
+		PrivateKey privIsm1 = KeyStoreManager.getPrivateKey("ismkey1", "passks", ks);
+		
+		System.out.println("Public key:");
+		System.out.println(getHexString(pubIsm1.getEncoded()));
+		System.out.println("Private key");
+		System.out.println(getHexString(privIsm1.getEncoded()));
+		
+		PublicKey pubIsm1FromCert = 
+				PublicCertificate.getCertificateKey("ISMCertificateX509.cer");
+		System.out.println("Public key from certificate: ");
+		System.out.println(getHexString(pubIsm1FromCert.getEncoded()));
+		
+		//encrypt and decrypt with asymmetric ciphers - RSA
+		//generate a random AES key and encrypt it with public RSA key
+		//decrypt AES key with RSA private key
+		
+		byte[] randomAESKey = AESCipher.generateKey(128);
+		System.out.println("AES Random key: ");
+		System.out.println(getHexString(randomAESKey));
+		
+		byte[] encryptedAESKey = 
+				RSACipher.encrypt(pubIsm1FromCert, randomAESKey);
+		
+		System.out.println("Encrypted AES key with RSA: ");
+		System.out.println(getHexString(encryptedAESKey));
+		
+		byte[] randomAESKeyCopy = 
+				RSACipher.decrypt(privIsm1, encryptedAESKey);
+		System.out.println("AES Key copy: ");
+		System.out.println(getHexString(randomAESKeyCopy));
+		
+		
+		//digital signatures
+		//generate a digital signature (RSA) for a file with private key
+		//validate the digital signature with public key
+		
+		byte[] signature = 
+				RSACipher.signFile("msg.txt", privIsm1);
+		
+		System.out.println("Digital signature value: ");
+		System.out.println(getHexString(signature));
+		
+		if(RSACipher.hasValidSignature(
+				"msg_copy.txt", pubIsm1FromCert, signature))
+		{
+			System.out.println("File is the original one");
+		} else {
+			System.out.println("File has been changed");
+		}
+		
+		
+		//using elliptic curves EC
+		
+	}
 
-5. **Verifies the message digest:**
-> After decrypting the digital signature, the recipient obtains the original message digest.
-
-6 **Compares with the locally generated message digest:**
-> The recipient independently generates a new message digest from the received plain text using the same hash function that the sender used.
-> The recipient compares the decrypted message digest with the locally generated message digest. If they match, it verifies the integrity of the message and the authenticity of the sender.
-
-**Note: Success.**
+}
+```
