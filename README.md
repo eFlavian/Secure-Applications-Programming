@@ -54,6 +54,8 @@ keytool.exe -genkey -keyalg RSA -alias ismkey2 -keypass passism2 -storepass pass
 keytool.exe -export -alias ismkey1 -file ISMCertificateX509.cer -keystore ismkeystore.ks -storepass passks   **(SE EXPORTA CHEIA PUBLICA: adica se genereaza certificatul)**
 ```
 
+> CN : CommonName. OU : OrganizationalUnit. O : Organization. L : Locality
+
 **Keytool adding certificate:**
 ```
 keytool -importcert -file certificate.cer -keystore keystore.jks -alias "ismasero"    **(SE IMPORTA CHEIA PUBLICA)**
