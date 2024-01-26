@@ -212,6 +212,10 @@ int main() {
 
 ```
 
+
+
+## All code:
+
 ```
 #include <stdio.h>
 #include <string.h>
