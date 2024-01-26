@@ -71,7 +71,7 @@ int main() {
 ```
 
 
-**Copying char*** to another char** with strcpy:**
+**Copying char*** to another char* with strcpy:
 ```
 #include <stdio.h>
 #include <string.h>
