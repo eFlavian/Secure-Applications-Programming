@@ -154,7 +154,7 @@ int main() {
 ```
 
 
-**Copying half of a byte array (if originalArray is a char*):**
+**Copying half of a byte array (if originalArray is a char***):**
 ```
 #include <stdio.h>
 #include <stdlib.h>
