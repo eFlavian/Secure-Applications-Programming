@@ -2372,3 +2372,86 @@ public class X509CertificateGenerator {
 }
 
 ```
+
+
+4. Read .pem file private/public keys.
+```
+public static RSAPublicKey readX509PublicKey(File file) throws Exception {
+    String key = new String(Files.readAllBytes(file.toPath()), Charset.defaultCharset());
+
+    String publicKeyPEM = key
+      .replace("-----BEGIN PUBLIC KEY-----", "")
+      .replaceAll(System.lineSeparator(), "")
+      .replace("-----END PUBLIC KEY-----", "");
+
+    byte[] encoded = Base64.decodeBase64(publicKeyPEM);
+
+    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+    X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);
+    return (RSAPublicKey) keyFactory.generatePublic(keySpec);
+}
+
+
+public RSAPrivateKey readPKCS8PrivateKey(File file) throws Exception {
+    String key = new String(Files.readAllBytes(file.toPath()), Charset.defaultCharset());
+
+    String privateKeyPEM = key
+      .replace("-----BEGIN PRIVATE KEY-----", "")
+      .replaceAll(System.lineSeparator(), "")
+      .replace("-----END PRIVATE KEY-----", "");
+
+    byte[] encoded = Base64.decodeBase64(privateKeyPEM);
+
+    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+    PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
+    return (RSAPrivateKey) keyFactory.generatePrivate(keySpec);
+}
+```
+
+
+
+5. Read .pem file private/public keys (buncy castle)
+```
+public RSAPublicKey readX509PublicKey(File file) throws Exception {
+    KeyFactory factory = KeyFactory.getInstance("RSA");
+
+    try (FileReader keyReader = new FileReader(file);
+      PemReader pemReader = new PemReader(keyReader)) {
+
+        PemObject pemObject = pemReader.readPemObject();
+        byte[] content = pemObject.getContent();
+        X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(content);
+        return (RSAPublicKey) factory.generatePublic(pubKeySpec);
+    }
+}
+public RSAPublicKey readX509PublicKeySecondApproach(File file) throws IOException {
+    try (FileReader keyReader = new FileReader(file)) {
+        PEMParser pemParser = new PEMParser(keyReader);
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+        SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(pemParser.readObject());
+        return (RSAPublicKey) converter.getPublicKey(publicKeyInfo);
+    }
+}
+public RSAPrivateKey readPKCS8PrivateKey(File file) throws Exception {
+    KeyFactory factory = KeyFactory.getInstance("RSA");
+
+    try (FileReader keyReader = new FileReader(file);
+      PemReader pemReader = new PemReader(keyReader)) {
+
+        PemObject pemObject = pemReader.readPemObject();
+        byte[] content = pemObject.getContent();
+        PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(content);
+        return (RSAPrivateKey) factory.generatePrivate(privKeySpec);
+    }
+}
+public RSAPrivateKey readPKCS8PrivateKeySecondApproach(File file) throws IOException {
+    try (FileReader keyReader = new FileReader(file)) {
+
+        PEMParser pemParser = new PEMParser(keyReader);
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+        PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(pemParser.readObject());
+
+        return (RSAPrivateKey) converter.getPrivateKey(privateKeyInfo);
+    }
+}
+```
