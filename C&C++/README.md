@@ -2,6 +2,216 @@
 
 ## All the source code (from the files) is here:
 
+**Sizes on x86**
+```
+    /*
+    -> x86
+        char: 1 byte
+        short: 2 bytes
+        int: 4 bytes
+        long: 4 bytes
+        long long: 8 bytes
+        float: 4 bytes
+        double: 8 bytes
+        long double: 12 bytes (size may vary)
+        pointer: 4 bytes
+        
+    -> x64
+        char: 1 byte
+        short: 2 bytes
+        int: 4 bytes
+        long: 8 bytes
+        long long: 8 bytes
+        float: 4 bytes
+        double: 8 bytes
+        long double: 16 bytes (size may vary)
+        pointer: 8 bytes
+    */
+
+    printf("Size of char: %lu bytes\n", sizeof(char));
+    printf("Size of short: %lu bytes\n", sizeof(short));
+    printf("Size of int: %lu bytes\n", sizeof(int));
+    printf("Size of long: %lu bytes\n", sizeof(long));
+    printf("Size of long long: %lu bytes\n", sizeof(long long));
+    printf("Size of float: %lu bytes\n", sizeof(float));
+    printf("Size of double: %lu bytes\n", sizeof(double));
+    printf("Size of long double: %lu bytes\n", sizeof(long double));
+    printf("Size of pointer: %lu bytes\n", sizeof(void*));
+
+```
+
+**Copying char[] to another char[] with strcpy:**
+```
+#include <stdio.h>
+#include <string.h>
+
+int main() {
+    // Source char array
+    char sourceArray[] = "Hello, World!";
+
+    // Calculate the size of the source array
+    size_t sourceSize = sizeof(sourceArray);
+
+    // Destination char array (allocate enough space)
+    char destinationArray[sourceSize];
+
+    // Copy elements from source to destination using strcpy
+    strcpy(destinationArray, sourceArray);
+
+    // Print the source array
+    printf("Source Array: %s\n", sourceArray);
+
+    // Print the destination array
+    printf("Destination Array: %s\n", destinationArray);
+
+    return 0;
+}
+
+
+```
+
+
+**Copying char* to another char* with strcpy:**
+```
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+int main() {
+    // Source char pointer
+    char* sourceArray = "Hello, World!";
+
+    // Calculate the size of the source array
+    size_t sourceSize = strlen(sourceArray) + 1; // +1 for the null terminator
+
+    // Destination char pointer (allocate enough space)
+    char* destinationArray = (char*)malloc(sourceSize);
+
+    if (destinationArray == NULL) {
+        fprintf(stderr, "Memory allocation error\n");
+        return 1; // Return an error code
+    }
+
+    // Copy elements from source to destination using strcpy
+    strcpy(destinationArray, sourceArray);
+
+    // Print the source array
+    printf("Source Array: %s\n", sourceArray);
+
+    // Print the destination array
+    printf("Destination Array: %s\n", destinationArray);
+
+    // Free the allocated memory for the destination array
+    free(destinationArray);
+
+    return 0;
+}
+
+```
+
+
+**Copying half of a byte array (if originalArray is a char[]):**
+```
+
+    // Sample byte array
+    unsigned char originalArray[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+
+    // Determine the size of the original array
+    size_t originalSize = sizeof(originalArray);
+
+    // Calculate the size of the new array (half of the original)
+    size_t newSize = originalSize / 2;
+
+    // Allocate memory for the new array
+    unsigned char* newArray = (unsigned char*)malloc(newSize);
+
+    if (newArray == NULL) {
+        fprintf(stderr, "Memory allocation error\n");
+        return 1; // Return an error code
+    }
+
+    // Copy the first half of the elements from the original array to the new array
+    for (size_t i = 0; i < newSize; ++i) {
+        newArray[i] = originalArray[i];
+    }
+
+    // Print the original array
+    printf("Original Array: ");
+    for (size_t i = 0; i < originalSize; ++i) {
+        printf("%02X ", originalArray[i]);
+    }
+    printf("\n");
+
+    // Print the new array (first half)
+    printf("New Array (First Half): ");
+    for (size_t i = 0; i < newSize; ++i) {
+        printf("%02X ", newArray[i]);
+    }
+    printf("\n");
+
+    // Free the allocated memory for the new array
+    free(newArray);
+```
+
+
+**Copying half of a byte array (if originalArray is a char*):**
+```
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    // Sample byte array as a dynamic array
+    unsigned char* originalArray = (unsigned char*)malloc(6 * sizeof(unsigned char));
+    originalArray[0] = 0x01;
+    originalArray[1] = 0x02;
+    originalArray[2] = 0x03;
+    originalArray[3] = 0x04;
+    originalArray[4] = 0x05;
+    originalArray[5] = 0x06;
+
+    // Determine the size of the original array
+    size_t originalSize = 6;
+
+    // Calculate the size of the new array (half of the original)
+    size_t newSize = originalSize / 2;
+
+    // Allocate memory for the new array
+    unsigned char* newArray = (unsigned char*)malloc(newSize * sizeof(unsigned char));
+
+    if (newArray == NULL) {
+        fprintf(stderr, "Memory allocation error\n");
+        free(originalArray);  // Don't forget to free the original array if an error occurs
+        return 1; // Return an error code
+    }
+
+    // Copy the first half of the elements from the original array to the new array
+    for (size_t i = 0; i < newSize; ++i) {
+        newArray[i] = originalArray[i];
+    }
+
+    // Print the original array
+    printf("Original Array: ");
+    for (size_t i = 0; i < originalSize; ++i) {
+        printf("%02X ", originalArray[i]);
+    }
+    printf("\n");
+
+    // Print the new array (first half)
+    printf("New Array (First Half): ");
+    for (size_t i = 0; i < newSize; ++i) {
+        printf("%02X ", newArray[i]);
+    }
+    printf("\n");
+
+    // Free the allocated memory for both arrays
+    free(originalArray);
+    free(newArray);
+
+    return 0;
+}
+
+```
+
 ```
 #include <stdio.h>
 #include <string.h>

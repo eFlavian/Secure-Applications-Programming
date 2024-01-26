@@ -73,7 +73,14 @@ keytool -importcert -file certificate.cer -keystore keystore.jks -alias "ismaser
 
 > Can be seen 2 levels of protection: -keypass: parola la cheia privata, -storepass: parola la store-ul care contine mai multe chestii. Ca o baza de date.
 
-
+Exporting the private key from the keystore
+```
+openssl pkcs12 -in ismkeystore.p12 -nocerts -nodes -out private_key.pem
+```
+```
+This command is converting a Java KeyStore (JKS) format (keystore.jks) to a PKCS#12 format (keystore.p12). PKCS#12 is a standard format that can store both private keys and certificates in a single file. 
+keytool -v -importkeystore -srckeystore keystore.jks -destkeystore keystore.p12 -deststoretype PKCS12
+```
 
 ## OpenSSL installation
 
