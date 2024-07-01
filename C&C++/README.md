@@ -1757,4 +1757,1199 @@ int main(int argc, char** argv)
     return 0;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+//2024
+#define _CRT_SECURE_NO_WARNINGS
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <stdio.h>
+#include <malloc.h>
+#include <openssl/sha.h>
+#include <openssl/aes.h>
+#include <openssl/applink.c>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+
+using namespace std;
+
+
+#define MESSAGE_CHUNK 256 
+
+int main() {
+    /*
+    1. Create a file named as name.txt to store your full name in text format. Compute and print out a SHA
+    256 hash value into the running application console. The SHA-256 value will be displayed in hex format. 
+    (0,5p) 
+    */
+
+    // Open a file for writing
+    ofstream outputFile("name.txt");
+
+    // Check if the file is opened successfully
+    if (!outputFile.is_open()) {
+        cerr << "Error opening the file for writing!" << endl;
+        return 1; // Return an error code
+    }
+
+    outputFile << "Flavian Ene";
+
+    // Close the file
+    outputFile.close();
+
+    cout << "File written successfully." << endl;
+
+
+    FILE* f = NULL;
+    errno_t err;
+    SHA256_CTX ctx;
+
+    // Array to store the final SHA-256 digest
+    unsigned char finalDigest[SHA256_DIGEST_LENGTH]; /// ATTENTION: CHANGE HERE THE SHA ALSO (SHA FOR 1, SHA256 FOR 256)
+
+    // Initialize the SHA-256 context
+    SHA256_Init(&ctx);
+
+    // Buffer to hold the content of the file
+    unsigned char* fileBuffer = NULL;
+    int lengthOfFile = 0;
+
+    // Attempt to open the file in binary read mode
+    err = fopen_s(&f, "name.txt", "rb");
+    if (err == 0) {
+        // Move the file pointer to the end of the file to determine its length
+        fseek(f, 0, SEEK_END);
+        int fileLen = ftell(f);
+        lengthOfFile = fileLen;
+        fseek(f, 0, SEEK_SET);
+
+        // Allocate memory for the file content buffer
+        fileBuffer = (unsigned char*)malloc(fileLen);
+
+        // Read the entire file content into the buffer
+        fread(fileBuffer, 1, fileLen, f);
+        unsigned char* tmpBuffer = fileBuffer;
+
+        // Process the file content in chunks of MESSAGE_CHUNK bytes
+        while (fileLen > 0) {
+            if (fileLen > MESSAGE_CHUNK) {
+                // Update the SHA-256 context with MESSAGE_CHUNK bytes of data
+                SHA256_Update(&ctx, tmpBuffer, MESSAGE_CHUNK);
+            }
+            else {
+                // Update the SHA-256 context with the remaining bytes of data
+                SHA256_Update(&ctx, tmpBuffer, fileLen);
+            }
+            fileLen -= MESSAGE_CHUNK;
+            tmpBuffer += MESSAGE_CHUNK;
+        }
+
+        // Finalize the SHA-256 digest
+        SHA256_Final(finalDigest, &ctx);
+
+        // Display the computed SHA-256 digest in hexadecimal format
+        printf("\nSHA256 = ");
+        for (int i = 0; i < SHA_DIGEST_LENGTH; i++) {
+            printf("%02X ", finalDigest[i]);
+            printf(" ");
+        }
+        printf("\n\n");
+
+        // Close the file
+        fclose(f);
+
+        //finalDigest contains the sha
+
+        /*
+            Encrypt the file name.txt using AES-256 in CBC mode (2p): 
+            ▪ IV provided by the text file iv.txt and having the hex format to be imported into an internal buffer as 
+            binary format.  
+            ▪ AES-256 bit key provided by the binary file named as aes.key. 
+            The output encrypted file will be named as enc_name.aes. No other data will be encrypted (e.g. IV, 
+            plaintext length and so forth) besides the content of name.txt. 
+        */
+
+
+        // read iv.txt
+        FILE* file;
+        unsigned char* aesKeyBuffer;
+        size_t fileSize;
+
+        // Attempt to open the file in binary read mode
+        err = fopen_s(&file, "aes.key", "rb");
+        if (err) {
+            perror("Error opening the file");
+            return 1; // Return an error code
+        }
+
+        // Determine the file size
+        fseek(file, 0, SEEK_END);
+        fileSize = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        // Allocate memory for the aesKeyBuffer (plus one for the null terminator)
+        aesKeyBuffer = (unsigned char*)malloc(fileSize + 1);
+        if (aesKeyBuffer == NULL) {
+            perror("Error allocating memory");
+            fclose(file);
+            return 1; // Return an error code
+        }
+
+        // Read the entire file into the aesKeyBuffer
+        fread(aesKeyBuffer, 1, fileSize, file);
+
+        // Null-terminate the aesKeyBuffer
+        aesKeyBuffer[fileSize] = '\0';
+
+        // now iv is in aesKeyBuffer
+        printf("aesKeyBuffer: ");
+        for (unsigned int i = 0; i < fileSize; i++)
+            printf(" %02X", aesKeyBuffer[i]);
+        printf("\n");
+
+
+
+        // Arrays to store the resulting ciphertext and restored plaintext
+        unsigned char ciphertext[48];
+        unsigned char restoringtext[48];
+
+        // Initialization Vectors (IV) for encryption and decryption
+        unsigned char IV_enc[] = { 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x08, 0x07, 0x06, 0x05, 0x00, 0x00, 0xff, 0xff };
+
+        unsigned char IV_dec[] = { 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x08, 0x07, 0x06, 0x05, 0x00, 0x00, 0xff, 0xff };
+
+        // Symmetric AES keys for 128, 192, and 256 bits
+        unsigned char key_128[] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+                                    0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x0a, 0xa0 };
+        unsigned char key_192[] = { 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x0a, 0xa0,
+                                    0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+                                    0x01, 0x02, 0x03, 0x04, 0x50, 0x51, 0x52, 0x53 };
+
+        AES_KEY aes_key; // AES key structure
+
+        // Set the encryption key for AES-256
+        AES_set_encrypt_key(aesKeyBuffer, 256, &aes_key);
+
+        // Encryption using AES-CBC mode
+        AES_cbc_encrypt(fileBuffer, ciphertext, sizeof(ciphertext), &aes_key, IV_enc, AES_ENCRYPT);
+
+        // Display the ciphertext in hexadecimal format
+        printf("Ciphertext for AES-CBC: ");
+        for (unsigned int i = 0; i < sizeof(ciphertext); i++)
+            printf(" %02X", ciphertext[i]);
+        printf("\n");
+
+        // Set the decryption key for AES-256
+        AES_set_decrypt_key(aesKeyBuffer, 256, &aes_key);
+
+        // Decryption using AES-CBC mode
+        AES_cbc_encrypt(ciphertext, restoringtext, sizeof(restoringtext), &aes_key, IV_dec, AES_DECRYPT);
+
+        // Display the restored fileBuffer in hexadecimal format
+        printf("Restored fileBuffer for AES-CBC: ");
+        for (unsigned int i = 0; i < lengthOfFile; i++)
+            printf("%c", restoringtext[i]);
+        printf("\n");
+
+        // Check if decryption was successful by comparing with the original fileBuffer
+        unsigned flag = 1;
+        for (unsigned int i = 0; i < lengthOfFile && flag; i++) {
+            if (fileBuffer[i] != restoringtext[i])
+                flag = 0;
+        }
+
+        // Display the result of the decryption
+        if (!flag)
+            printf("Decryption failed!\n");
+        else
+            printf("Successful decryption!\n");
+
+        //save cipher as enc_name.aes
+
+        // Open a file for binary writing
+        FILE* cryptedFile;
+
+        // Attempt to open the file in binary read mode
+        err = fopen_s(&cryptedFile, "enc_name.aes", "wb");
+        if (err) {
+            perror("Error opening the file");
+            return 1; // Return an error code
+        }
+
+        // Write the entire byte array to the file
+        fwrite(ciphertext, sizeof(ciphertext[0]), sizeof(ciphertext) / sizeof(ciphertext[0]), cryptedFile);
+
+        cout << "\nenc_name.aes written successfully.\n";
+
+
+        /*
+        
+            To ensure the destination that no one is tampering with that value, digitally sign (computed for the
+            above SHA-256) the previous encrypted binary file with a RSA-1024 bit private key generated by your
+            application. Store the signature in another binary file named digital.sign. (2p)
+            Use the RSA-1024 bit private key to sign the file name.txt. Upload your binary signature file (digital.sign)
+            together with the RSA-1024 bit public key file.
+            To get the points, the digital signature must be validated during the assessment.
+
+        */
+
+        //finalDigest - sha256 buffer
+        //ciphertext - encrypted binary file
+
+        // generate RSA key pair
+
+        RSA* rsaKP = NULL;
+
+        // Generate RSA key pair with 1024 bits, public exponent 65535 (standard value), and no callback and no user data
+        rsaKP = RSA_generate_key(1024, 65535, NULL, NULL);
+
+        // Check the validity of the generated key pair
+        RSA_check_key(rsaKP);
+
+        // File pointer for the private key file
+        FILE* fpPriv = NULL;
+        // Create or open the file to store the RSA private key in PEM format
+        fopen_s(&fpPriv, "privKey.pem", "w+");
+
+        // Write the RSA private key to the file in PEM format
+        PEM_write_RSAPrivateKey(fpPriv, rsaKP, NULL, NULL, 0, 0, NULL);
+
+        // Close the file
+        fclose(fpPriv);
+
+        // File pointer for the public key file
+        FILE* fpPub = NULL;
+        // Create or open the file to store the RSA public key in PEM format
+        fopen_s(&fpPub, "pubKey.pem", "w+");
+
+        // Write the RSA public key to the file in PEM format
+        PEM_write_RSAPublicKey(fpPub, rsaKP);
+
+
+        // Print a message indicating the completion of the RSA key pair generation
+        printf("\n The RSA key pair generated! \n");
+
+
+
+
+
+
+        FILE* fdst = NULL;
+        errno_t err;
+
+        // Open the destination file for writing in binary mode
+        err = fopen_s(&fdst, "digital.sign", "wb");
+
+        RSA* apriv;
+        FILE* f;
+
+        unsigned char* buf = NULL;
+        unsigned char* e_data = NULL;
+
+        apriv = RSA_new();
+
+        // Load the RSA private key
+        f = fopen("privKey.pem", "r");
+        apriv = PEM_read_RSAPrivateKey(f, NULL, NULL, NULL);
+        fclose(f);
+
+        // Allocate buffer for the digital signature
+        buf = (unsigned char*)malloc(sizeof(finalDigest));
+        memcpy(buf, finalDigest, sizeof(finalDigest));
+
+        // Allocate buffer for the digital signature (RSA block)
+        e_data = (unsigned char*)malloc(RSA_size(apriv));
+
+        // RSA private key encryption for digital signature
+        RSA_private_encrypt(sizeof(finalDigest), buf, e_data, apriv, RSA_PKCS1_PADDING);
+
+        // Print the digital signature
+        printf("Signature(RSA) = ");
+        printf("\n");
+        for (int i = 0; i < RSA_size(apriv); i++) {
+            printf(" %02X ", e_data[i]);
+        }
+        printf("\n");
+
+        // Write the digital signature to the destination file
+        fwrite(e_data, RSA_size(apriv), 1, fdst);
+
+
+
+
+
+
+        fclose(fdst);
+        free(e_data);
+        free(buf);
+        RSA_free(apriv);
+        fclose(fpPub);
+        RSA_free(rsaKP);
+        fclose(cryptedFile);
+        fclose(file);
+        free(aesKeyBuffer);
+    }
+
+
+    return 0; // Return success
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//2023
+#define _CRT_SECURE_NO_WARNINGS
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <stdio.h>
+#include <malloc.h>
+#include <openssl/sha.h>
+#include <openssl/aes.h>
+#include <openssl/applink.c>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <string>
+#include <iomanip>
+
+
+using namespace std;
+
+
+#define MESSAGE_CHUNK 256 
+
+int main() {
+
+
+    /*
+        Consider you have a list of pre-defined passwords stored by your database available in wordlist.txt. 
+        Develop a C/C++ application using OpenSSL as 3rd party crypto library for the below requirements. 
+        1. In order to secure the users’ credentials, you have to apply SHA-256 for all the passwords stored 
+        by the text file.  
+        The hashed content must meet the following requirements (10p): - - 
+        To be saved into a separate text file named as hashes.txt. 
+        Each line of the output file hashes.txt represents the hexadecimal format of the hashed content 
+        for the password stored on the same line within the input password file. 
+    */
+    // Open a file for reading
+    ifstream inputFile("wordlist.txt");
+
+    // Check if the file is opened successfully
+    if (!inputFile.is_open()) {
+        cerr << "Error opening the file!" << endl;
+        return 1; // Return an error code
+    }
+
+    // Open a file for writing
+    ofstream outputFile("hashes.txt");
+
+    // Check if the file is opened successfully
+    if (!outputFile.is_open()) {
+        cerr << "Error opening the file for writing!" << endl;
+        return 1; // Return an error code
+    }
+
+    // Read and print the contents of the file line by line
+    string line;
+    while (getline(inputFile, line)) {
+        // process line
+        SHA256_CTX ctx;
+        unsigned char finalDigest[SHA256_DIGEST_LENGTH];
+
+        // Initialize the SHA-256 context
+        SHA256_Init(&ctx);
+
+        // Update the SHA-256 context with the line
+        SHA256_Update(&ctx, line.c_str(), line.size());
+
+        // Finalize the SHA-256 digest
+        SHA256_Final(finalDigest, &ctx);
+
+        // Write the SHA-256 hash in hexadecimal format to the output file
+        for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+            outputFile << hex << setw(2) << setfill('0') << (int)finalDigest[i];
+        }
+        outputFile << endl;
+
+        // Display the computed SHA-256 digest in hexadecimal format
+
+        /*
+            printf("\nSHA256 = ");
+            for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+                printf("%02x ", finalDigest[i]);
+            }
+            printf("\n\n");
+        */
+    }
+
+    cout << "File written successfully." << endl;
+
+    
+    /*
+    
+        In hashes.txt each line is encrypted by using the AES-CBC-256 scheme. The IV and AES-256 key
+        are stored by the binary file named aes-cbc.bin, where IV is first and it is followed by AES-256 key.
+        The encrypted content must meet the following requirements (10p): -
+        To be saved into a separate text file named as enc-sha256.txt. -
+        Each line of the output file enc-sha256.txt represents the hexadecimal format of the encrypted
+        SHA-256 stored on the same line in hashes.txt.
+
+    */
+
+
+    // Open a file for reading
+    ifstream readingHashes("hashes.txt");
+
+    // Check if the file is opened successfully
+    if (!readingHashes.is_open()) {
+        cerr << "Error opening the file!" << endl;
+        return 1; // Return an error code
+    }
+
+
+    // Open a file for writing
+    ofstream outputCryptedPasses("enc-sha256.txt");
+
+    // Check if the file is opened successfully
+    if (!outputCryptedPasses.is_open()) {
+        cerr << "Error opening the file for writing!" << endl;
+        return 1; // Return an error code
+    }
+
+
+
+    //iv has 16 bytes
+
+
+    FILE* fileWithIVandAesKey;
+    long fileSize;
+    unsigned char* bufferIVandKey;
+
+    // Open the file for binary reading
+    fileWithIVandAesKey = fopen("aes-cbc.bin", "rb");
+
+    // Check if the file is opened successfully
+    if (fileWithIVandAesKey == NULL) {
+        perror("Error opening the file");
+        return 1; // Return an error code
+    }
+
+    // Determine the file size
+    fseek(fileWithIVandAesKey, 0, SEEK_END);
+    fileSize = ftell(fileWithIVandAesKey);
+    fseek(fileWithIVandAesKey, 0, SEEK_SET);
+
+    // Allocate memory for the byte array
+    bufferIVandKey = (unsigned char*)malloc(fileSize);
+    if (bufferIVandKey == NULL) {
+        perror("Error allocating memory");
+        fclose(fileWithIVandAesKey);
+        return 1; // Return an error code
+    }
+
+    // Read the entire file into the bufferIVandKey
+    fread(bufferIVandKey, 1, fileSize, fileWithIVandAesKey);
+
+    // Close the file
+    fclose(fileWithIVandAesKey);
+
+    // bufferIVandKey - has IV on first 16 bytes and the rest is aes key
+
+    // Destination char array (allocate enough space)
+    char ivArray[16];
+
+    // Destination char array (allocate enough space)
+    char ivArray2[16];
+
+    // Destination char array (allocate enough space)
+    char aesKeyArray[32];
+
+    // Copy elements from source to destination using strcpy
+    memcpy(ivArray, (char*)bufferIVandKey, 16);
+    // Copy elements from source to destination using strcpy
+    memcpy(ivArray2, (char*)bufferIVandKey, 16);
+
+    // Copy elements from source to destination using strcpy
+    memcpy(aesKeyArray, (char*)bufferIVandKey+16, 32);
+
+    printf("IV Array: ");
+    for (unsigned int i = 0; i < sizeof(ivArray); i++)
+        printf(" %02X", ivArray[i]);
+    printf("\n");
+
+    printf("IV Array2: ");
+    for (unsigned int i = 0; i < sizeof(ivArray2); i++)
+        printf(" %02X", ivArray2[i]);
+    printf("\n");
+
+
+
+    printf("AESKey Array: ");
+    for (unsigned int i = 0; i < sizeof(aesKeyArray); i++)
+        printf(" %02X", aesKeyArray[i]);
+    printf("\n");
+
+
+
+    string lineFromHashes;
+    while (getline(readingHashes, lineFromHashes)) {
+
+
+
+        // Arrays to store the resulting ciphertext and restored plaintext
+        unsigned char ciphertext[64];
+        unsigned char restoringtext[64];
+
+
+        AES_KEY aes_key; // AES key structure
+
+        // Set the encryption key for AES-256
+        AES_set_encrypt_key((unsigned char*)aesKeyArray, 256, &aes_key);
+
+        // Encryption using AES-CBC mode
+        AES_cbc_encrypt((unsigned char*)lineFromHashes.c_str(), ciphertext, sizeof(ciphertext), &aes_key, (unsigned char*)ivArray, AES_ENCRYPT);
+
+        // Display the ciphertext in hexadecimal format
+        /*
+        
+        printf("Ciphertext for AES-CBC: ");
+        for (unsigned int i = 0; i < sizeof(ciphertext); i++)
+            printf("%02X", ciphertext[i]);
+        printf("\n");
+
+        */
+
+
+        //writting hex / hexadeicmal format inside text file
+        cout << endl;
+        for (int i = 0; i < sizeof(ciphertext); i++) {
+            printf(" %02X", ciphertext[i]);
+            outputCryptedPasses << hex << setw(2) << setfill('0') << (int)ciphertext[i];
+        }
+        outputCryptedPasses << endl;
+        cout << endl;
+
+
+
+
+
+        // Set the decryption key for AES-256
+        AES_set_decrypt_key((unsigned char*)aesKeyArray, 256, &aes_key);
+
+        // Decryption using AES-CBC mode
+        AES_cbc_encrypt(ciphertext, restoringtext, sizeof(restoringtext), &aes_key, (unsigned char*)ivArray2, AES_DECRYPT);
+        /*
+
+        // Display the restored plaintext in hexadecimal format
+        printf("Restored plaintext for AES-CBC: ");
+        for (unsigned int i = 0; i < sizeof((unsigned char*)lineFromHashes.c_str())*16; i++)
+            printf("%c", restoringtext[i]);
+        printf("\n");
+        */
+
+        // Check if decryption was successful by comparing with the original plaintext
+        unsigned flag = 1;
+        for (unsigned int i = 0; i < sizeof((unsigned char*)lineFromHashes.c_str()) && flag; i++) {
+            if ((unsigned char)lineFromHashes.c_str()[i] != restoringtext[i])
+                flag = 0;
+        }
+
+        // Display the result of the decryption
+        // if (!flag)
+        //     printf("Decryption failed!\n");
+        // else
+        //     printf("Successful decryption!\n");
+
+
+
+
+    }
+
+
+    outputCryptedPasses.close(); // close the file
+
+
+    //Generate the digital signature for the file enc-sha256.txt and save that signature into a file called 
+    //esign.sig.The message digest algorithm is SHA - 256, and the 1024 - bit RSA key for signature
+    //generation is stored in a PEM file named as rsa - key.pem. (5p)
+
+
+
+
+    RSA* rsaKP = NULL;
+
+    // Generate RSA key pair with 1024 bits, public exponent 65535 (standard value), and no callback and no user data
+    rsaKP = RSA_generate_key(1024, 65535, NULL, NULL);
+
+    // Check the validity of the generated key pair
+    RSA_check_key(rsaKP);
+
+    // File pointer for the private key file
+    FILE* fpPriv = NULL;
+    // Create or open the file to store the RSA private key in PEM format
+    fopen_s(&fpPriv, "privKey.pem", "w+");
+
+    // Write the RSA private key to the file in PEM format
+    PEM_write_RSAPrivateKey(fpPriv, rsaKP, NULL, NULL, 0, 0, NULL);
+
+    // Close the file
+    fclose(fpPriv);
+
+    // File pointer for the public key file
+    FILE* fpPub = NULL;
+    // Create or open the file to store the RSA public key in PEM format
+    fopen_s(&fpPub, "pubKey.pem", "w+");
+
+    // Write the RSA public key to the file in PEM format
+    PEM_write_RSAPublicKey(fpPub, rsaKP);
+
+    // Close the file
+    fclose(fpPub);
+
+    // Free the allocated storage for RSA key pair
+    RSA_free(rsaKP);
+
+    // Print a message indicating the completion of the RSA key pair generation
+    printf("\n The RSA key pair generated! \n");
+
+
+
+    FILE* fsrc = NULL;
+    FILE* fdst = NULL;
+    errno_t err;
+    SHA256_CTX ctx;
+
+    // Variables to store the SHA-256 digest and the final digital signature
+    unsigned char finalDigest[SHA256_DIGEST_LENGTH];
+    unsigned char* fileBuffer = NULL;
+
+    // Initialize SHA-256 context
+    SHA256_Init(&ctx);
+
+    // Open the source file for reading in binary mode
+    err = fopen_s(&fsrc, "enc-sha256.txt", "rb"); // err 13 = denied permission (need to closeeee the file :)) )
+    fseek(fsrc, 0, SEEK_END);
+    int fileLen = ftell(fsrc);
+    fseek(fsrc, 0, SEEK_SET);
+
+    // Allocate buffer to store file content
+    fileBuffer = (unsigned char*)malloc(fileLen);
+    fread(fileBuffer, fileLen, 1, fsrc);
+    unsigned char* tmpBuffer = fileBuffer;
+
+    // Update SHA-256 context with file content
+    while (fileLen > 0) {
+        if (fileLen > SHA256_DIGEST_LENGTH) {
+            SHA256_Update(&ctx, tmpBuffer, SHA256_DIGEST_LENGTH);
+        }
+        else {
+            SHA256_Update(&ctx, tmpBuffer, fileLen);
+        }
+        fileLen -= SHA256_DIGEST_LENGTH;
+        tmpBuffer += SHA256_DIGEST_LENGTH;
+    }
+
+    // Finalize SHA-256 and get the digest
+    SHA256_Final(finalDigest, &ctx);
+
+    // Print the SHA-256 digest
+    printf("SHA(256) = ");
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+        printf("%02X ", finalDigest[i]);
+    printf("\n");
+
+    fclose(fsrc);
+
+    // Open the destination file for writing in binary mode
+    err = fopen_s(&fdst, "esign.sig", "wb");
+
+    RSA* apriv;
+    FILE* f;
+
+    unsigned char* buf = NULL;
+    unsigned char* e_data = NULL;
+
+    apriv = RSA_new();
+
+    // Load the RSA private key
+    f = fopen("privKey.pem", "r");
+    apriv = PEM_read_RSAPrivateKey(f, NULL, NULL, NULL);
+    fclose(f);
+
+    // Allocate buffer for the digital signature
+    buf = (unsigned char*)malloc(sizeof(finalDigest));
+    memcpy(buf, finalDigest, sizeof(finalDigest));
+
+    // Allocate buffer for the digital signature (RSA block)
+    e_data = (unsigned char*)malloc(RSA_size(apriv));
+
+    // RSA private key encryption for digital signature
+    RSA_private_encrypt(sizeof(finalDigest), buf, e_data, apriv, RSA_PKCS1_PADDING);
+
+    // Print the digital signature
+    printf("Signature(RSA) = ");
+    printf("\n");
+    for (int i = 0; i < RSA_size(apriv); i++) {
+        printf("%02X ", e_data[i]);
+    }
+    printf("\n");
+
+    // Write the digital signature to the destination file
+    fwrite(e_data, RSA_size(apriv), 1, fdst);
+
+    fclose(fdst);
+
+    // Free allocated memory
+    free(e_data);
+    free(buf);
+
+    // Free RSA key structure
+    RSA_free(apriv);
+
+
+
+
+
+    free(bufferIVandKey);
+    readingHashes.close();
+    outputFile.close();
+    inputFile.close();
+
+    return 0; // Return success
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+//2021
+
+#define _CRT_SECURE_NO_WARNINGS
+#include <iostream>
+#include <fstream>
+#include <stdio.h>
+#include <malloc.h>
+#include <memory.h>
+#include <openssl/applink.c>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/sha.h>
+#include <string>
+#include <openssl/aes.h>
+#include <iomanip>
+
+#define MESSAGE_CHUNK 256 
+
+using namespace std;
+
+int main()
+{
+    //decrypt hfile.sign to get the plaintext content as an SHA-256. The used padding is PKCS1.
+
+    FILE* fsrc = NULL;
+    FILE* fsig = NULL;
+    errno_t err;
+    SHA256_CTX ctx;
+
+    // Step #2: Decrypt the content of e-signature and compare it with the message digest from Step #1
+    err = fopen_s(&fsig, "hfile.sign", "rb");
+
+    RSA* apub;
+    FILE* f;
+    unsigned char* buf = NULL;
+    unsigned char* last_data = NULL;
+
+    apub = RSA_new();
+
+    // Load the RSA public key
+    f = fopen("pExam.pem", "r");
+    apub = PEM_read_RSAPublicKey(f, NULL, NULL, NULL);
+    fclose(f);
+
+    // Allocate buffer for the ciphertext (e-signature)
+    buf = (unsigned char*)malloc(RSA_size(apub));
+
+    // Read the ciphertext from the e-signature file
+    fread(buf, RSA_size(apub), 1, fsig);
+
+    // Allocate buffer for the decrypted content
+    last_data = (unsigned char*)malloc(SHA256_DIGEST_LENGTH);
+
+    // Decrypt the e-signature using the RSA public key
+    RSA_public_decrypt(RSA_size(apub), buf, last_data, apub, RSA_PKCS1_PADDING);
+
+    // Close the e-signature file
+    fclose(fsig);
+
+    // Print the decrypted SHA-256 content obtained from the e-signature file
+    printf("\n SHA-256 content decrypted from digital signature file: ");
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+        printf("%02X ", last_data[i]);
+    printf("\n");
+
+
+
+
+
+
+
+
+    // Open a file for writing
+    ofstream outputFile("enclist.txt");
+
+    // Check if the file is opened successfully
+    if (!outputFile.is_open()) {
+        cerr << "Error opening the file for writing!" << endl;
+        return 1; // Return an error code
+    }
+
+
+
+
+
+    // Open a file for reading
+    ifstream inputFile("wordlist.txt");
+
+    // Check if the file is opened successfully
+    if (!inputFile.is_open()) {
+        cerr << "Error opening the file!" << endl;
+        return 1;
+    }
+
+    // Read and print the contents of the file line by line
+    string line;
+    while (getline(inputFile, line)) {
+        // line
+
+        // Arrays to store the resulting ciphertext and restored plaintext
+        unsigned char ciphertext[48];
+        unsigned char restoringtext[48];
+
+        // Initialization Vectors (IV) for encryption and decryption
+        unsigned char IV_enc[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
+                                   0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+
+        unsigned char IV_dec[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                   0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+
+        // Symmetric AES keys for 128, 192, and 256 bits
+        unsigned char key_128[] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+                                    0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x0a, 0xa0 };
+        unsigned char key_192[] = { 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x0a, 0xa0,
+                                    0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+                                    0x01, 0x02, 0x03, 0x04, 0x50, 0x51, 0x52, 0x53 };
+        unsigned char key_256[] = { 0x01, 0x02, 0x03, 0x04, 0x50, 0x51, 0x52, 0x53,
+                                    0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x0a, 0xa0,
+                                    0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+                                    0x0f, 0x0f, 0x0f, 0x0f, 0xf0, 0xf0, 0xf0, 0xf0 };
+
+        //key128 bit
+        unsigned char keyFromSha[16];
+
+        memcpy(keyFromSha, last_data, 16); // from position 0 to 15 (copying)
+        //memcpy(keyFromSha, last_data[16], 40); // from position 16 to 56.
+
+        AES_KEY aes_key; // AES key structure
+
+        // Set the encryption key for AES-128
+        AES_set_encrypt_key(keyFromSha, (sizeof(keyFromSha) * 8), &aes_key);
+
+        // Encryption using AES-CBC mode
+        AES_cbc_encrypt((unsigned char*)line.c_str(), ciphertext, sizeof(ciphertext), &aes_key, IV_enc, AES_ENCRYPT);
+
+        // Display the ciphertext in hexadecimal format
+        printf("Ciphertext for AES-CBC: ");
+        for (unsigned int i = 0; i < sizeof(ciphertext); i++)
+            printf(" %02X", ciphertext[i]);
+        printf("\n");
+
+
+        // write the ciphertext in file in hexFormat:
+        for (unsigned char byte : ciphertext) {
+            outputFile << hex << setw(2) << setfill('0') << static_cast<int>(byte);
+        }
+        outputFile << endl;
+
+
+        // Set the decryption key for AES-128
+        AES_set_decrypt_key(keyFromSha, (sizeof(keyFromSha) * 8), &aes_key);
+
+        // Decryption using AES-CBC mode
+        AES_cbc_encrypt(ciphertext, restoringtext, sizeof(restoringtext), &aes_key, IV_dec, AES_DECRYPT);
+
+        // Display the restored plaintext in hexadecimal format
+        printf("Restored plaintext for AES-CBC: ");
+        for (unsigned int i = 0; i < line.length(); i++)
+            printf("%c", restoringtext[i]);
+        printf("\n");
+
+        // Check if decryption was successful by comparing with the original plaintext
+        unsigned flag = 1;
+        for (unsigned int i = 0; i < sizeof((unsigned char*)line.c_str()) && flag; i++) {
+            if ((unsigned char)line.c_str()[i] != restoringtext[i])
+                flag = 0;
+        }
+
+        // Display the result of the decryption
+        if (!flag)
+            printf("Decryption failed!\n");
+        else
+            printf("Successful decryption!\n");
+
+
+
+
+
+
+
+    }
+
+    outputFile.close();
+    cout << "File enclist.txt generated successfully." << endl;
+    inputFile.close();
+
+
+
+    // rsa for enclist.txt with PKCS1
+
+
+    RSA* rsaKP = NULL;
+
+    // Generate RSA key pair with 1024 bits, public exponent 65535 (standard value), and no callback and no user data
+    rsaKP = RSA_generate_key(1024, 65535, NULL, NULL);
+
+    // Check the validity of the generated key pair
+    RSA_check_key(rsaKP);
+
+    // File pointer for the private key file
+    FILE* fpPriv = NULL;
+    // Create or open the file to store the RSA private key in PEM format
+    fopen_s(&fpPriv, "privKey.pem", "w+");
+
+    // Write the RSA private key to the file in PEM format
+    PEM_write_RSAPrivateKey(fpPriv, rsaKP, NULL, NULL, 0, 0, NULL);
+
+    // Close the file
+    fclose(fpPriv);
+
+    // File pointer for the public key file
+    FILE* fpPub = NULL;
+    // Create or open the file to store the RSA public key in PEM format
+    fopen_s(&fpPub, "pubKey.pem", "w+");
+
+    // Write the RSA public key to the file in PEM format
+    PEM_write_RSAPublicKey(fpPub, rsaKP);
+
+    // Close the file
+    fclose(fpPub);
+
+    // Free the allocated storage for RSA key pair
+    RSA_free(rsaKP);
+
+    // Print a message indicating the completion of the RSA key pair generation
+    printf("\n The RSA key pair generated! \n");
+
+
+
+    FILE* fRSAsrc = NULL;
+    FILE* fdst = NULL;
+    SHA256_CTX ctx2;
+
+    // Variables to store the SHA-256 digest and the final digital signature
+    unsigned char finalDigest[SHA256_DIGEST_LENGTH];
+    unsigned char* fileBuffer = NULL;
+
+    // Initialize SHA-256 context
+    SHA256_Init(&ctx2);
+
+    // Open the source file for reading in binary mode
+    err = fopen_s(&fRSAsrc, "enclist.txt", "rb");
+    fseek(fRSAsrc, 0, SEEK_END);
+    int fileLen = ftell(fRSAsrc);
+    fseek(fRSAsrc, 0, SEEK_SET);
+
+    // Allocate buffer to store file content
+    fileBuffer = (unsigned char*)malloc(fileLen);
+    fread(fileBuffer, fileLen, 1, fRSAsrc);
+    unsigned char* tmpBuffer = fileBuffer;
+
+    // Update SHA-256 context with file content
+    while (fileLen > 0) {
+        if (fileLen > SHA256_DIGEST_LENGTH) {
+            SHA256_Update(&ctx2, tmpBuffer, SHA256_DIGEST_LENGTH);
+        }
+        else {
+            SHA256_Update(&ctx2, tmpBuffer, fileLen);
+        }
+        fileLen -= SHA256_DIGEST_LENGTH;
+        tmpBuffer += SHA256_DIGEST_LENGTH;
+    }
+
+    // Finalize SHA-256 and get the digest
+    SHA256_Final(finalDigest, &ctx2);
+
+    // Print the SHA-256 digest
+    printf("SHA(256) = ");
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+        printf("%02X ", finalDigest[i]);
+    printf("\n");
+
+    fclose(fRSAsrc);
+
+    // Open the destination file for writing in binary mode
+    err = fopen_s(&fdst, "enclistRSA.enc", "wb");
+
+    RSA* apriv;
+    FILE* rsaf;
+
+    unsigned char* bufDigitalSign = NULL;
+    unsigned char* e_data = NULL;
+
+    apriv = RSA_new();
+
+    // Load the RSA private key
+    rsaf = fopen("privKey.pem", "r");
+    apriv = PEM_read_RSAPrivateKey(rsaf, NULL, NULL, NULL);
+    fclose(rsaf);
+
+    // Allocate buffer for the digital signature
+    bufDigitalSign = (unsigned char*)malloc(sizeof(finalDigest));
+    memcpy(bufDigitalSign, finalDigest, sizeof(finalDigest));
+
+    // Allocate buffer for the digital signature (RSA block)
+    e_data = (unsigned char*)malloc(RSA_size(apriv));
+
+    // RSA private key encryption for digital signature
+    RSA_private_encrypt(sizeof(finalDigest), bufDigitalSign, e_data, apriv, RSA_PKCS1_PADDING);
+
+    // Print the digital signature
+    printf("Signature(RSA) = ");
+    printf("\n");
+    for (int i = 0; i < RSA_size(apriv); i++) {
+        printf("%02X ", e_data[i]);
+    }
+    printf("\n");
+
+    // Write the digital signature to the destination file
+    fwrite(e_data, RSA_size(apriv), 1, fdst);
+
+
+    //sha1 for enclist.txt
+
+
+    FILE* fSha1 = NULL;
+    SHA_CTX ctx3;
+
+    // Array to store the final SHA-1 digest
+    unsigned char finalDigestSha1[SHA_DIGEST_LENGTH];
+
+    // Initialize the SHA-1 context
+    SHA1_Init(&ctx3);
+
+    // Buffer to hold the content of the file
+    unsigned char* fileBufferSha1 = NULL;
+
+    // Attempt to open the file in binary read mode
+    err = fopen_s(&fSha1, "enclist.txt", "rb");
+    if (err == 0) {
+        // Move the file pointer to the end of the file to determine its length
+        fseek(fSha1, 0, SEEK_END);
+        int fileLen = ftell(f);
+        fseek(fSha1, 0, SEEK_SET);
+
+        // Allocate memory for the file content buffer
+        fileBufferSha1 = (unsigned char*)malloc(fileLen);
+
+        // Read the entire file content into the buffer
+        fread(fileBufferSha1, fileLen, 1, fSha1);
+        unsigned char* tmpBuffer = fileBufferSha1;
+
+        // Process the file content in chunks of MESSAGE_CHUNK bytes
+        while (fileLen > 0) {
+            if (fileLen > MESSAGE_CHUNK) {
+                // Update the SHA-1 context with MESSAGE_CHUNK bytes of data
+                SHA1_Update(&ctx3, tmpBuffer, MESSAGE_CHUNK);
+            }
+            else {
+                // Update the SHA-1 context with the remaining bytes of data
+                SHA1_Update(&ctx3, tmpBuffer, fileLen);
+            }
+            fileLen -= MESSAGE_CHUNK;
+            tmpBuffer += MESSAGE_CHUNK;
+        }
+
+        // Finalize the SHA-1 digest
+        SHA1_Final(finalDigestSha1, &ctx3);
+
+        // Display the computed SHA-1 digest in hexadecimal format
+        printf("\nSHA1 = ");
+        for (int i = 0; i < SHA_DIGEST_LENGTH; i++) {
+            printf("%02X ", finalDigestSha1[i]);
+            printf(" ");
+        }
+        printf("\n\n");
+
+        // Close the file
+        fclose(fSha1);
+    }
+
+
+
+
+
+    fclose(fdst);
+    free(e_data);
+    free(bufDigitalSign);
+    RSA_free(apriv);
+    free(last_data);
+    free(buf);
+    RSA_free(apub);
+
+    return 0;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ```

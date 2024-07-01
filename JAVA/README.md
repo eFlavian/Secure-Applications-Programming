@@ -2455,3 +2455,828 @@ public RSAPrivateKey readPKCS8PrivateKeySecondApproach(File file) throws IOExcep
     }
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+22
+```
+
+public class Main {
+    public static void main(String[] args) throws IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, CertificateException, KeyStoreException, UnrecoverableKeyException, SignatureException {
+        //47
+        String path = "C:\\Users\\Daniela\\IdeaProjects\\testSAP3";
+
+
+        // In order to use this passphrase as a secret password you will compute its SHA-1 value. That will be your access
+        // key. Print it on the screen to check it.
+
+
+        //managing the file system
+        File file = new File("C:\\Users\\Daniela\\IdeaProjects\\testSAP3\\Passphrase.txt");
+
+
+        //reading from text files
+        FileReader fileReader = new FileReader(file);
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+        String line = bufferedReader.readLine();
+
+        byte[] sha1 = getMessageDigest(line); // my access key
+
+        System.out.println("sha1: " + getHexString(sha1));
+
+        //The system admin is storing sensitive data in the EncryptedData.data file. Knowing that
+        //▪ the file has been encrypted using AES in CBC mode please decrypt it
+        //▪ The encryption didn’t use any padding as the file length is ok.
+        //▪ The IV value is also known because it is stored at the beginning of the encrypted file.
+        //▪ The encryption key is equal with the first 128 bits of the previous SHA1 hash value // 128/8 = 16
+        //Let’s suppose that the obtained plaintext is named OriginalData.txt.
+
+        byte[] encryptionKey = new byte[16]; // my access key
+        for(int i=0;i<=15;i++){
+            encryptionKey[i] = sha1[i];
+        }
+
+
+        System.out.println("encryptionKey: " + getHexString(encryptionKey));
+        System.out.println("encryptionKey as string: " + encryptionKey);
+
+        decrypt(path+"\\EncryptedData.data","OriginalData.txt", encryptionKey,"AES");
+
+        //In the end you want to digitally sign (using RSA digital signature) the obtained plaintext OriginalData.txt. Your
+        //private key, named sapexamkey, is stored in the Java Key store file, sap_exam_keystore.ks. The key password and
+        //the keystore password are stored in the OriginalData.txt file that you decrypted earlier.
+        //The obtained digital signature must be stored in the DataSignature.ds file. It will be used by others to check the file.
+
+
+        KeyStore ks = getKeyStore("sap_exam_keystore.ks", "you_already_made_it", "pkcs12");
+        list(ks);
+
+        PublicKey pubIsm1 = getPublicKey("sapexamkey", ks);
+        PrivateKey privIsm1 = getPrivateKey("sapexamkey", "you_already_made_it", ks); // For some reason, key pass isn't setting and reverts to default keystore pass. Done it with "C:\Program Files\Java\jdk-21\bin\keytool.exe" -genkeypair -keyalg RSA -alias sapexamkey -keypass grant_access -storepass you_already_made_it -keystore sap_exam_keystore.ks -dname "cn=EneFlavian, ou=ISM, o=IT&C Security Master, c=RO"
+
+
+        //digital signatures
+        //generate a digital signature (RSA) for a file with private key
+        //validate the digital signature with public key
+
+        byte[] signature = signFile("OriginalData.txt", privIsm1);
+
+        File dataFile = new File("DataSignature.ds");
+        if(!dataFile.exists()) {
+            dataFile.createNewFile();
+        }
+
+        FileOutputStream fos = new FileOutputStream(dataFile);
+        BufferedOutputStream bos = new BufferedOutputStream(fos);
+        DataOutputStream dos = new DataOutputStream(bos);
+
+        dos.write(signature);
+        dos.close();
+
+        System.out.println("Digital signature value: ");
+        System.out.println(getHexString(signature));
+
+        if(hasValidSignature("OriginalData.txt", pubIsm1, signature))
+        {
+            System.out.println("File is the original one");
+        } else {
+            System.out.println("File has been changed");
+        }
+
+        bufferedReader.close();
+    }
+
+
+    public static void list(KeyStore ks) throws KeyStoreException {
+        System.out.println("Key store content: ");
+        Enumeration<String> aliases = ks.aliases();
+
+        while(aliases.hasMoreElements()) {
+            String alias = aliases.nextElement();
+            System.out.println("Entry: " + alias);
+            if(ks.isCertificateEntry(alias)) {
+                System.out.println("-- Is a certificate");
+            }
+            if(ks.isKeyEntry(alias)) {
+                System.out.println("-- Is a key pair");
+            }
+        }
+    }
+
+
+    public static byte[] signFile(String filename, PrivateKey key) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+        File file = new File(filename);
+        if(!file.exists()) {
+            throw new FileNotFoundException();
+        }
+        FileInputStream fis = new FileInputStream(file);
+
+        byte[] fileContent = fis.readAllBytes();
+
+        fis.close();
+
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(key);
+
+        signature.update(fileContent);
+        return signature.sign();
+    }
+
+    public static boolean hasValidSignature(
+            String filename, PublicKey key, byte[] signature) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+
+        File file = new File(filename);
+        if(!file.exists()) {
+            throw new FileNotFoundException();
+        }
+
+        FileInputStream fis = new FileInputStream(file);
+        byte[] fileContent = fis.readAllBytes();
+        fis.close();
+
+        Signature signatureModule = Signature.getInstance("SHA256withRSA");
+        signatureModule.initVerify(key);
+
+        signatureModule.update(fileContent);
+        return signatureModule.verify(signature);
+
+    }
+
+
+    public static PublicKey getPublicKey(String alias, KeyStore ks) throws KeyStoreException {
+        if(ks == null) {
+            throw new UnsupportedOperationException("Missing Key Store");
+        }
+        if(ks.containsAlias(alias)) {
+            return ks.getCertificate(alias).getPublicKey();
+        } else {
+            return null;
+        }
+    }
+
+    public static PrivateKey getPrivateKey(
+            String alias, String keyPass, KeyStore ks ) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException {
+        if(ks == null) {
+            throw new UnsupportedOperationException("Missing Key Store");
+        }
+        if(ks.containsAlias(alias)) {
+            return (PrivateKey) ks.getKey(alias, keyPass.toCharArray());
+        } else {
+            return null;
+        }
+    }
+
+
+    public static KeyStore getKeyStore(
+            String keyStoreFile,
+            String keyStorePass,
+            String keyStoreType) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
+        File file = new File(keyStoreFile);
+        if(!file.exists()) {
+            throw new UnsupportedOperationException("Missing key store file");
+        }
+
+        FileInputStream fis = new FileInputStream(file);
+
+        KeyStore ks = KeyStore.getInstance(keyStoreType);
+        ks.load(fis, keyStorePass.toCharArray());
+
+        fis.close();
+        return ks;
+    }
+    public static void decrypt(
+            String filename,
+            String outputFile,
+            byte[] password,
+            String algorithm) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+
+
+        //IV the cipher file at the beginning
+
+        File inputFile = new File(filename);
+        if(!inputFile.exists()) {
+            throw new UnsupportedOperationException("Missing file");
+        }
+        File outFile = new File(outputFile);
+        if(!outFile.exists()) {
+            outFile.createNewFile();
+        }
+
+        FileInputStream fis = new FileInputStream(inputFile);
+        FileOutputStream fos = new FileOutputStream(outFile);
+
+        Cipher cipher = Cipher.getInstance(algorithm + "/CBC/NoPadding");
+
+        //getting the IV from the file
+        byte[] IV = new byte[cipher.getBlockSize()];
+        fis.read(IV);
+
+        SecretKeySpec key = new SecretKeySpec(password, algorithm);
+        IvParameterSpec ivSpec = new IvParameterSpec(IV);
+
+        cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+
+        byte[] buffer = new byte[cipher.getBlockSize()];
+        int noBytes = 0;
+
+        while(true) {
+            noBytes = fis.read(buffer);
+            if(noBytes == -1) {
+                break;
+            }
+            byte[] cipherBlock = cipher.update(buffer, 0, noBytes);
+            fos.write(cipherBlock);
+        }
+        byte[] lastBlock = cipher.doFinal();
+        fos.write(lastBlock);
+
+        fis.close();
+        fos.close();
+    }
+
+
+    public static String getHexString(byte[] value) {
+        StringBuilder result = new StringBuilder();
+        result.append("0x");
+        for(byte b : value) {
+            result.append(String.format(" %02X", b));
+        }
+        return result.toString();
+    }
+
+
+    public static byte[] getMessageDigest(String input) throws NoSuchAlgorithmException {
+
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
+        return md.digest(input.getBytes());
+    }
+}
+```
+
+
+
+
+
+
+
+23
+```
+
+public class Main {
+    public static void main(String[] args) throws IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, KeyStoreException, UnrecoverableKeyException, SignatureException, CertificateException {
+
+        //Use the fingerprints.txt content to identify the file from system32.zip which has been changed.
+
+        //managing the file system
+        File location = new File("C:\\Users\\Daniela\\IdeaProjects\\testSAP4\\system32");
+        if(!location.exists()) {
+            throw new UnsupportedOperationException("FOLDER is not there");
+        }
+
+        File fingerprints = new File("C:\\Users\\Daniela\\IdeaProjects\\testSAP4\\sha2Fingerprints.txt");
+
+        String fileName = "";
+        byte[] password = new byte[0];
+        File[] files =  location.listFiles();
+        for(File file : files) {
+
+            // process file
+            FileInputStream fis = new FileInputStream(file);
+            BufferedInputStream bis = new BufferedInputStream(fis);
+            DataInputStream dis = new DataInputStream(bis);
+
+            byte[] byteValues = dis.readAllBytes();
+            byte[] byteValuesHashes = getMessageDigest(byteValues);
+
+            FileReader fileReader = new FileReader(fingerprints);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+            String line;
+            int found = 0;
+
+            while((line = bufferedReader.readLine()) != null) {
+                if(line.equals(Base64.getEncoder().encodeToString(byteValuesHashes))){
+                    found = 1;
+                }
+            }
+            if(found==0){
+                fileName = file.getName();
+                password = byteValues;
+            }
+
+            bufferedReader.close();
+        }
+
+        System.out.println("File that was altered is: " + fileName); // svchost71.exe
+        //Using the random password, extracted from the file identified at the previous step, decrypt the
+        //“financialdata.enc” file into “financialdata.txt”. The virus has encrypted it using AES in CBC mode, with PKCS5Padding.
+        //Reverse engineering the virus you find out that that the IV had 1st byte (from right to left) equal with 23, 2nd byte equal
+        //with 20, 3rd byte equal with 2 and 4th byte equal with 3. The rest of them are all 0s.
+
+        decrypt("financialdata.enc","financialdata.txt",password,"AES"); // MC2817569000515924956987R16
+
+
+        //To confirm your success and get your bounty, write the value of the 1st IBAN into myresponse.txt and digital sign
+        //this file with your private key (you need to generate a private – public key using keytool). The signature is an RSA with
+        //SHA256 digital signature. Don’t forget to send the “financialdata.txt”, “myresponse.txt” and your signature stored in a
+        //file called DataSignature.ds
+
+
+        //text files
+        File myresponse = new File("myresponse.txt");
+        if(!myresponse.exists()) {
+            myresponse.createNewFile();
+        }
+
+        //writing into text files
+        FileWriter fileWriter = new FileWriter(myresponse, true);
+        PrintWriter printWriter = new PrintWriter(fileWriter);
+        printWriter.println("MC2817569000515924956987R16");
+        printWriter.close();
+
+
+        KeyStore ks = getKeyStore( "keystore.ks", "parola", "pkcs12");
+
+        PublicKey publicKey = getPublicKey("key1", ks);
+        PrivateKey privateKey = getPrivateKey("key1", "parola", ks);
+
+        //digital signatures
+        //generate a digital signature (RSA) for a file with private key
+        //validate the digital signature with public key
+
+        byte[] signature = signFile("myresponse.txt", privateKey);
+
+        if(hasValidSignature( "myresponse.txt", publicKey, signature))
+        {
+            System.out.println("File is the original one");
+        } else {
+            System.out.println("File has been changed");
+        }
+
+
+        File dataFile = new File("DataSignature.ds ");
+        if(!dataFile.exists()) {
+            dataFile.createNewFile();
+        }
+        FileOutputStream fos = new FileOutputStream(dataFile);
+        BufferedOutputStream bos = new BufferedOutputStream(fos);
+        DataOutputStream dos = new DataOutputStream(bos);
+
+        dos.write(signature);
+        dos.close();
+
+
+    }
+
+    public static PublicKey getPublicKey(String alias, KeyStore ks) throws KeyStoreException {
+        if(ks == null) {
+            throw new UnsupportedOperationException("Missing Key Store");
+        }
+        if(ks.containsAlias(alias)) {
+            return ks.getCertificate(alias).getPublicKey();
+        } else {
+            return null;
+        }
+    }
+
+    public static PrivateKey getPrivateKey(
+            String alias, String keyPass, KeyStore ks ) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException {
+        if(ks == null) {
+            throw new UnsupportedOperationException("Missing Key Store");
+        }
+        if(ks.containsAlias(alias)) {
+            return (PrivateKey) ks.getKey(alias, keyPass.toCharArray());
+        } else {
+            return null;
+        }
+    }
+
+    public static KeyStore getKeyStore(
+            String keyStoreFile,
+            String keyStorePass,
+            String keyStoreType) throws KeyStoreException, NoSuchAlgorithmException, IOException, CertificateException {
+        File file = new File(keyStoreFile);
+        if(!file.exists()) {
+            throw new UnsupportedOperationException("Missing key store file");
+        }
+
+        FileInputStream fis = new FileInputStream(file);
+
+        KeyStore ks = KeyStore.getInstance(keyStoreType);
+        ks.load(fis, keyStorePass.toCharArray());
+
+        fis.close();
+        return ks;
+    }
+
+    public static byte[] signFile(String filename, PrivateKey key) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+        File file = new File(filename);
+        if(!file.exists()) {
+            throw new FileNotFoundException();
+        }
+        FileInputStream fis = new FileInputStream(file);
+
+        byte[] fileContent = fis.readAllBytes();
+
+        fis.close();
+
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(key);
+
+        signature.update(fileContent);
+        return signature.sign();
+    }
+
+    public static boolean hasValidSignature(
+            String filename, PublicKey key, byte[] signature) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+
+        File file = new File(filename);
+        if(!file.exists()) {
+            throw new FileNotFoundException();
+        }
+
+        FileInputStream fis = new FileInputStream(file);
+        byte[] fileContent = fis.readAllBytes();
+        fis.close();
+
+        Signature signatureModule = Signature.getInstance("SHA256withRSA");
+        signatureModule.initVerify(key);
+
+        signatureModule.update(fileContent);
+        return signatureModule.verify(signature);
+
+    }
+
+
+    public static void decrypt(
+            String filename,
+            String outputFile,
+            byte[] password,
+            String algorithm) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+
+
+        //IV the cipher file at the beginning
+
+        File inputFile = new File(filename);
+        if(!inputFile.exists()) {
+            throw new UnsupportedOperationException("Missing file");
+        }
+        File outFile = new File(outputFile);
+        if(!outFile.exists()) {
+            outFile.createNewFile();
+        }
+
+        FileInputStream fis = new FileInputStream(inputFile);
+        FileOutputStream fos = new FileOutputStream(outFile);
+
+        Cipher cipher = Cipher.getInstance(algorithm + "/CBC/PKCS5Padding");
+
+        //Reverse engineering the virus you find out that that the IV had 1st byte (from right to left) equal with 23, 2nd byte equal
+        //with 20, 3rd byte equal with 2 and 4th byte equal with 3. The rest of them are all 0s.
+        byte[] IV = new byte[cipher.getBlockSize()];
+        IV[IV.length-1] = 0x17;
+        IV[IV.length-2] = 0x14;
+        IV[IV.length-3] = 0x03;
+        IV[IV.length-4] = 0x02;
+        IV[IV.length-4] = 0x03;
+
+
+        SecretKeySpec key = new SecretKeySpec(password, algorithm);
+        IvParameterSpec ivSpec = new IvParameterSpec(IV);
+
+        cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+
+        byte[] buffer = new byte[cipher.getBlockSize()];
+        int noBytes = 0;
+
+        while(true) {
+            noBytes = fis.read(buffer);
+            if(noBytes == -1) {
+                break;
+            }
+            byte[] cipherBlock = cipher.update(buffer, 0, noBytes);
+            fos.write(cipherBlock);
+        }
+        byte[] lastBlock = cipher.doFinal();
+        fos.write(lastBlock);
+
+        fis.close();
+        fos.close();
+    }
+
+    public static byte[] getMessageDigest(byte[] input) throws NoSuchAlgorithmException {
+
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        return md.digest(input);
+    }
+
+}
+
+```
+
+
+
+
+24
+```
+public class Main {
+    public static void main(String[] args) throws IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidKeySpecException, CertificateException, KeyStoreException, UnrecoverableKeyException, SignatureException {
+
+        //A DB admin asks for your help to update the hash value of a user in his/her database.
+        //He sent you that user password in an encrypted file (with a .user extension). Search for that file as you
+        //know its SHA256 hash value in Base64 format.
+        //Print the designated file name at the console.
+
+        //SHA256 hash value in Base64 format
+        String shaHashInBase = "M07BQL3cbJ2hiOxE6InVBCDwU8MO30Vq+pYt+TGn/8s=";
+        String password = "userfilepass@0]3";
+        String fileName = "";
+        //The byte with index 12 from left to right has all bits 1. The others are all 0
+
+        //managing the file system
+        File location = new File("C:\\Users\\Daniela\\IdeaProjects\\testSAP2\\users");
+        if(!location.exists()) {
+            throw new UnsupportedOperationException("FOLDER is not there");
+        }
+
+        File[] files =  location.listFiles();
+        for(File file : files) {
+            //read from a binary file
+            FileInputStream fis = new FileInputStream(file);
+            BufferedInputStream bis = new BufferedInputStream(fis);
+            DataInputStream dis = new DataInputStream(bis);
+
+            byte[] byteValues = dis.readAllBytes();
+            byte[] messageDigest = getMessageDigest(byteValues);
+
+            if(shaHashInBase.equals(Base64.getEncoder().encodeToString(messageDigest))){
+                System.out.println(file.getName());
+                fileName = file.getName();
+            }
+        }
+
+        //Once you found the file, decrypt it (AES in CBC mode with a known IV - check the user’s file (the index
+        //starts at 0). There is no need for Padding as the file has the required size) using the password sent by
+        //your friend (check the users.pdf file).
+        //The decrypted content represents the user password as a string with 16 characters.
+        //Print the user password at the console.
+
+        String userPass = decrypt("C:\\Users\\Daniela\\IdeaProjects\\testSAP2\\users\\"+fileName,"pass.txt",password,"AES");
+        System.out.println(userPass);
+
+        //Add to the user password the "ism2021" salt at the end and hash it with the PBKDF (Password-Based
+        //Key Derivation Function) based on HmacSHA1 algorithm with 150 iterations. The output must have
+        //20 bytes.
+        //Store the result in a binary file (you can choose the filename name). To get the points, the value must
+        //be validated by your friend.
+
+        String salt = "ism2021";
+        String newPassword = userPass + salt;
+
+
+        byte[] saltedHash = getPBKDF(newPassword,"PBKDF2WithHmacSHA1", salt, 150);
+        System.out.println(getHexString(saltedHash));
+
+        File dataFile = new File("pbkdf.dat");
+        if(!dataFile.exists()) {
+            dataFile.createNewFile();
+        }
+        FileOutputStream fos = new FileOutputStream(dataFile);
+        BufferedOutputStream bos = new BufferedOutputStream(fos);
+        DataOutputStream dos = new DataOutputStream(bos);
+
+        dos.write(saltedHash);
+        dos.close();
+
+
+        //To assure your friend that no one is tampering with that value, digitally sign the previous binary file
+        //with your private key. Store the signature in another binary file.
+        //Using keytool generate a RSA pair. Export the public key in a X509 .cer file. Use the private key to sign
+        //the previous file.
+        //Send your colleague the binary files with the signature and your public certificate.
+        //To get points the digital signature must be validated for the previous file with your public key.
+
+
+        KeyStore ks = getKeyStore("keystore.ks", "parola", "pkcs12");
+
+        PrivateKey privIsm1 = getPrivateKey("key1", "parola", ks);
+
+        byte[] signature = signFile("pbkdf.dat", privIsm1);
+
+
+        File signatureFile = new File("signature.dat");
+        if(!signatureFile.exists()) {
+            signatureFile.createNewFile();
+        }
+        FileOutputStream fos1 = new FileOutputStream(signatureFile);
+        BufferedOutputStream bos1 = new BufferedOutputStream(fos1);
+        DataOutputStream dos1 = new DataOutputStream(bos1);
+
+        dos1.write(signature);
+        dos1.close();
+
+        PublicKey pubIsm1FromCert = getCertificateKey("EneFlavian.cer");
+
+
+        if(hasValidSignature("pbkdf.dat", pubIsm1FromCert, signature))
+        {
+            System.out.println("File is the original one");
+        } else {
+            System.out.println("File has been changed");
+        }
+    }
+
+    public static boolean hasValidSignature(String filename, PublicKey key, byte[] signature) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+
+        File file = new File(filename);
+        if(!file.exists()) {
+            throw new FileNotFoundException();
+        }
+
+        FileInputStream fis = new FileInputStream(file);
+        byte[] fileContent = fis.readAllBytes();
+        fis.close();
+
+        Signature signatureModule = Signature.getInstance("SHA256withRSA");
+        signatureModule.initVerify(key);
+
+        signatureModule.update(fileContent);
+        return signatureModule.verify(signature);
+
+    }
+
+    public static PublicKey getCertificateKey(String certificateFile) throws CertificateException, IOException {
+        File file = new File(certificateFile);
+        if(!file.exists()) {
+            throw new UnsupportedOperationException("****Missing file****");
+        }
+        FileInputStream fis = new FileInputStream(file);
+
+        CertificateFactory certFactory =
+                CertificateFactory.getInstance("X.509");
+        X509Certificate certificate =
+                (X509Certificate) certFactory.generateCertificate(fis);
+        fis.close();
+        return certificate.getPublicKey();
+    }
+
+    public static PublicKey getPublicKey(String alias, KeyStore ks) throws KeyStoreException {
+        if(ks == null) {
+            throw new UnsupportedOperationException("Missing Key Store");
+        }
+        if(ks.containsAlias(alias)) {
+            return ks.getCertificate(alias).getPublicKey();
+        } else {
+            return null;
+        }
+    }
+
+    public static PrivateKey getPrivateKey( String alias, String keyPass, KeyStore ks ) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException {
+        if(ks == null) {
+            throw new UnsupportedOperationException("Missing Key Store");
+        }
+        if(ks.containsAlias(alias)) {
+            return (PrivateKey) ks.getKey(alias, keyPass.toCharArray());
+        } else {
+            return null;
+        }
+    }
+
+    public static byte[] signFile(String filename, PrivateKey key) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+        File file = new File(filename);
+        if(!file.exists()) {
+            throw new FileNotFoundException();
+        }
+        FileInputStream fis = new FileInputStream(file);
+
+        byte[] fileContent = fis.readAllBytes();
+
+        fis.close();
+
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(key);
+
+        signature.update(fileContent);
+        return signature.sign();
+    }
+    public static KeyStore getKeyStore(
+            String keyStoreFile,
+            String keyStorePass,
+            String keyStoreType) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
+        File file = new File(keyStoreFile);
+        if(!file.exists()) {
+            throw new UnsupportedOperationException("Missing key store file");
+        }
+
+        FileInputStream fis = new FileInputStream(file);
+
+        KeyStore ks = KeyStore.getInstance(keyStoreType);
+        ks.load(fis, keyStorePass.toCharArray());
+
+        fis.close();
+        return ks;
+    }
+
+
+    public static String getHexString(byte[] value) {
+        StringBuilder result = new StringBuilder();
+        result.append("0x");
+        for(byte b : value) {
+            result.append(String.format(" %02X", b));
+        }
+        return result.toString();
+    }
+
+    public static byte[] getPBKDF(
+            String userPassword,
+            String algorithm,
+            String salt,
+            int noIterations
+    ) throws NoSuchAlgorithmException, InvalidKeySpecException {
+
+        SecretKeyFactory pbkdf =
+                SecretKeyFactory.getInstance(algorithm);
+        PBEKeySpec pbkdfSpecifications =
+                new PBEKeySpec(
+                        userPassword.toCharArray(),
+                        salt.getBytes(),
+                        noIterations,160);
+        SecretKey secretKey = pbkdf.generateSecret(pbkdfSpecifications);
+        return secretKey.getEncoded();
+    }
+
+    public static String decrypt(
+            String filename,
+            String outputFile,
+            String password,
+            String algorithm) throws IOException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+
+        String userPass = "";
+        //IV the cipher file at the beginning
+
+        File inputFile = new File(filename);
+        if(!inputFile.exists()) {
+            throw new UnsupportedOperationException("Missing file");
+        }
+        File outFile = new File(outputFile);
+        if(!outFile.exists()) {
+            outFile.createNewFile();
+        }
+
+        FileInputStream fis = new FileInputStream(inputFile);
+        FileOutputStream fos = new FileOutputStream(outFile);
+
+        Cipher cipher = Cipher.getInstance(algorithm + "/CBC/NoPadding");
+        //The byte with index 12 from left to right has all bits 1. The others are all 0
+        //getting the IV from the file
+        byte[] IV = new byte[cipher.getBlockSize()];
+        IV[12]= (byte) 0xFF;
+        //fis.read(IV);
+
+        SecretKeySpec key = new SecretKeySpec(password.getBytes(), algorithm);
+        IvParameterSpec ivSpec = new IvParameterSpec(IV);
+
+        cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+
+        byte[] buffer = new byte[cipher.getBlockSize()];
+        int noBytes = 0;
+
+        while(true) {
+            noBytes = fis.read(buffer);
+            if(noBytes == -1) {
+                break;
+            }
+            byte[] cipherBlock = cipher.update(buffer, 0, noBytes);
+            fos.write(cipherBlock);
+            userPass = new String(cipherBlock);
+        }
+        byte[] lastBlock = cipher.doFinal();
+        fos.write(lastBlock);
+
+        fis.close();
+        fos.close();
+        return userPass;
+    }
+
+    public static byte[] getMessageDigest(byte[] input) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        return md.digest(input);
+    }
+
+
+}
+
+```
